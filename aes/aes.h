@@ -12,7 +12,7 @@
 #define NB 4 // Number of Blocks
 
 #if defined(AES128)
-    extern uint8_t KEY[];
+    // extern uint8_t KEY[];
     #define NK 4 // Number of words(32 bit) in a key
     #define NR 10 // Number of Rounds
 #elif defined(AES192)
@@ -40,7 +40,7 @@ typedef struct aes {
   uint8_t state[NK][4];
 } Aes;
 
-Aes *AesInit();
+Aes *AesInit(uint8_t *key);
 void KeyExpansion(Aes *aes);
 void AddRoundKey(uint8_t round, uint8_t (*state)[4], uint8_t (*round_keys)[4]);
 void SubBytes(uint8_t (*state)[4]);
@@ -53,7 +53,7 @@ void Cipher(uint8_t (*state)[4], uint8_t (*round_keys)[4]);
 void InvCipher(uint8_t (*state)[4], uint8_t (*round_keys)[4]);
 void XorIV(uint8_t *buf, uint8_t *iv);
 char *Encrypt(Aes *aes, char *buf);
-char *Decrypt(Aes *aes, char *buf);
+char *Decrypt(Aes *aes, char *buf, int size);
 
 
 static const uint8_t sbox[256] = {

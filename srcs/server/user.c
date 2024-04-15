@@ -8,11 +8,11 @@ User *NewUser(int fd) {
     char *buf = (char *)malloc(sizeof(char) * BUF_SIZE);
     memset(buf, 0, sizeof(char) * BUF_SIZE);
     user->buf = buf;
+    user->status = WAIT_ID;
 
     return user;
 }
 
-// User *UserByFd(List *list, int fd) {
 User *UserByFd(Array *users, int fd) {
     int i;
 

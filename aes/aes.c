@@ -5,7 +5,7 @@
 #include "aes.h"
 
 uint8_t Iv[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
-uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
+// uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
 
 static uint8_t xtime(uint8_t x)
 {
@@ -21,12 +21,13 @@ static uint8_t Multiply(uint8_t x, uint8_t y)
        ((y>>4 & 1) * xtime(xtime(xtime(xtime(x))))));
 }
 
-Aes *AesInit() {
+Aes *AesInit(uint8_t *key) {
     int i;
     Aes *aes = malloc(sizeof(Aes));
 
     memcpy(aes->iv, Iv, 16);
     aes->rcon[0] = 0x8d;
+    memcpy(aes->key, key, 4 * NK);
     for (i = 1; i <= NR; i++) {
         uint16_t tmp = aes->rcon[i - 1];
         if (tmp >= 0x80) aes->rcon[i] = tmp * 2 ^ 0x11B;
@@ -239,7 +240,7 @@ void XorIV(uint8_t *buf, uint8_t *iv) {
 
 char *Encrypt(Aes *aes, char *buf) {
     int len = strlen(buf);
-    int size = ((len / 16) + 1) * 16;
+    int size = len % 16 == 0 ? len : ((len / 16) + 1) * 16;
     char *cipher = malloc(sizeof(char) * size);
     char *ret = cipher;
     int i;
@@ -257,14 +258,14 @@ char *Encrypt(Aes *aes, char *buf) {
     return ret;
 }
 
-char *Decrypt(Aes *aes, char *buf) {
+char *Decrypt(Aes *aes, char *buf, int size) {
     int i;
     uint8_t next_iv[_BLOCK_LEN];
-    int len = strlen(buf);
-    char *plain = malloc(sizeof(char) * len);
+    char *plain = malloc(sizeof(char) * size);
     char *ret = plain;
 
-    for (i = 0; i < len; i += _BLOCK_LEN) {
+    memcpy(aes->iv, Iv, 16);
+    for (i = 0; i < size; i += _BLOCK_LEN) {
         memcpy(next_iv, buf, 16);
         InvCipher((uint8_t (*)[4])buf, aes->round_keys);
         XorIV(buf, aes->iv);
@@ -273,7 +274,7 @@ char *Decrypt(Aes *aes, char *buf) {
         buf += _BLOCK_LEN;
     }
     if (plain[_BLOCK_LEN - 1] < 0x0F) {
-        for (i = len - plain[_BLOCK_LEN - 1]; i < len; i++) {
+        for (i = size - plain[_BLOCK_LEN - 1]; i < size; i++) {
             plain[i] = 0;
         }
     }

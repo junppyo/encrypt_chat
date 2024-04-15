@@ -36,7 +36,7 @@ void ProcessCommand(Server *server, User* user) {
     } else {
         SendMsg(server, user);
     }
-    memcpy(buf, 0, BUF_SIZE);
+    memset(buf, 0, BUF_SIZE);
 }
 
 void SendMsg(Server *server, User *user) {
