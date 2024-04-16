@@ -241,7 +241,7 @@ void XorIV(uint8_t *buf, uint8_t *iv) {
 char *Encrypt(Aes *aes, char *buf) {
     int len = strlen(buf);
     int size = len % 16 == 0 ? len : ((len / 16) + 1) * 16;
-    char *cipher = malloc(sizeof(char) * size);
+    char *cipher = malloc(sizeof(char) * size + 1);
     char *ret = cipher;
     int i;
     memcpy(aes->iv, Iv, 16);
@@ -255,26 +255,29 @@ char *Encrypt(Aes *aes, char *buf) {
         memcpy(aes->iv, cipher, 16);
         cipher += _BLOCK_LEN;
     }
+    *cipher = '\0';
     return ret;
 }
 
 char *Decrypt(Aes *aes, char *buf, int size) {
     int i;
     uint8_t next_iv[_BLOCK_LEN];
-    char *plain = malloc(sizeof(char) * size);
+    char *buf_ptr = buf;
+    char *plain = malloc(sizeof(char) * size + 1);
     char *ret = plain;
 
     memcpy(aes->iv, Iv, 16);
     for (i = 0; i < size; i += _BLOCK_LEN) {
-        memcpy(next_iv, buf, 16);
-        InvCipher((uint8_t (*)[4])buf, aes->round_keys);
-        XorIV(buf, aes->iv);
-        memcpy(&plain[i], buf, 16);
+        memcpy(next_iv, buf_ptr, 16);
+        InvCipher((uint8_t (*)[4])buf_ptr, aes->round_keys);
+        XorIV(buf_ptr, aes->iv);
+        memcpy(&plain[i], buf_ptr, 16);
         memcpy(aes->iv, next_iv, 16);
-        buf += _BLOCK_LEN;
+        buf_ptr += _BLOCK_LEN;
     }
-    if (plain[_BLOCK_LEN - 1] < 0x0F) {
-        for (i = size - plain[_BLOCK_LEN - 1]; i < size; i++) {
+    plain[size] = '\0';
+    if (plain[size - 1] < 0x0F) {
+        for (i = size - plain[size - 1]; i < size; i++) {
             plain[i] = 0;
         }
     }

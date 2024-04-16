@@ -1,6 +1,6 @@
 CC = gcc
 INC = -I./incs/
-SERVER_SRCS = $(addprefix ./srcs/server/, utils.c user.c chat.c server.c db.c command.c)
+SERVER_SRCS = $(addprefix ./srcs/server/, utils.c user.c chat.c server.c db.c command.c room.c)
 CLIENT_SRCS = $(addprefix ./srcs/client/, client.c)
 SERVER_OBJS = $(SERVER_SRCS:%.c=%.o)
 CLIENT_OBJS = $(CLIENT_SRCS:%.c=%.o)

@@ -8,5 +8,6 @@
 #define DB_PASS "root"
 #define DB_NAME "chat"
 
-bool FindUser(MYSQL* conn, char *buf);
+char *DbGetUser(MYSQL* conn, char *buf);
+int DbCreateUser(MYSQL* conn, char *user, char *pass);
 MYSQL* DbInit();

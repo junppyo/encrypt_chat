@@ -14,7 +14,7 @@ typedef struct server {
     struct sockaddr_in server_addr;
     Array *users;
     Array *rooms;
-    uint16_t room_number;
+    uint16_t room_count;
     Array *read_fds;
     Aes *aes;
     MYSQL *db;

@@ -8,7 +8,7 @@ all : $(NAME)
 
 
 $(NAME) :
-	$(CC) $(FLAG) $(NAME) $(SRC)
+	$(CC) $(FLAG) $(SRC) -o $(NAME)
 
 fclean:
 	rm -rf $(NAME) $(OBJ)

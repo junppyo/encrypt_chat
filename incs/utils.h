@@ -37,3 +37,6 @@ Array* InitArray(size_t data_size);
 void InsertArray(Array *arr, void *data);
 void EraseArray(Array *arr, size_t n);
 void ClearArray(Array *arr);
+
+char *ToHex(uint8_t *buf);
+char *ToString(char *buf);

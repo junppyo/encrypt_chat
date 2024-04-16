@@ -16,7 +16,7 @@ Server *InitServer(int port) {
     server->sock = socket(AF_INET, SOCK_STREAM, 0);
     server->aes = AesInit(KEY);
     server->status = 0;
-    server->room_number = 0;
+    server->room_count = 0;
     server->db = DbInit();
     
     if (server->sock == -1) {
@@ -123,7 +123,9 @@ int ReadFlag(Server *server, struct kevent *event) {
     } else {
         User *user = UserByFd(server->users, event->ident);
         uint8_t *buf = user->buf;
-        int len = recv(user->fd, buf + strlen(buf), BUF_SIZE, 0);
+        int len = read(user->fd, buf, BUF_SIZE);
+        user->buf_len = len;
+        // int len = recv(user->fd, buf + strlen(buf), BUF_SIZE, 0);
 
         if (len < 0) {
             printf("receive error\n");
@@ -132,18 +134,37 @@ int ReadFlag(Server *server, struct kevent *event) {
             server->status = -1;
             return -1;
         }
-        printf("\tbuf len : %ld\n", strlen(buf));
-        printf("%s\n", buf);
         switch (user->status) {
             case WAIT_ID:
-                printf("input_id\n");
                 SetId(server, user, buf);
                 break;
             case WAIT_PASS:
+                if (!TryLogin(server, user, buf)) {
+                    close(user->fd);
+                    DeleteUserByFd(server->users, user->fd);
+                } else {
+                    user->status = LOGIN;
+                }
                 break;
             case WAIT_REGIST:
+                if (CreateUser(server, user, buf)) {
+                    close(user->fd);
+                    DeleteUserByFd(server->users, user->fd);
+                } else {
+                    user->status = LOGIN;
+                }
                 break;
             case LOGIN:
+                JoinRoom(server, user, user->buf);
+                user->status = PUBLIC;
+                break;
+            case TRY_PRIVATE:
+                if (user->status == TRY_PRIVATE) {
+                    Room *room = FindRoomByNumber(server->rooms, user->fd);
+                    char *room_pw = Decrypt(server->aes, room->password, strlen(room->password));
+                }
+            case PUBLIC:
+                SendMsg(server, user);
                 break;
         }
         InsertArray(server->read_fds, (void*)&event->ident);
@@ -181,7 +202,7 @@ int ConnectClient(Server *server) {
     }
     fcntl(client_sock, F_SETFL, O_NONBLOCK);
     AddEvents(server, client_sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    char *msg = "Please enter your ID\n";
+    char *msg = "Please enter your ID : ";
     write(client_sock, msg, strlen(msg));
     // send(client_sock, msg, strlen(msg), 0);
     InsertArray(server->users, NewUser(client_sock));

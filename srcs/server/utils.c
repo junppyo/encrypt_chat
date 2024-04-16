@@ -1,4 +1,4 @@
-#include "../incs/utils.h"
+#include "../../incs/utils.h"
 
 void AllocError() {
     printf("Memory allocate failed");
@@ -124,6 +124,7 @@ Array* InitArray(size_t data_size) {
 
     return arr;
 }
+
 void InsertArray(Array *arr, void *data) {
     if (arr->size == arr->capacity) {
         arr->capacity *= 2;
@@ -156,4 +157,41 @@ void ClearArray(Array *arr) {
     // free(arr->data);
 
     // free(arr);
+}
+
+
+char *ToHex(uint8_t *buf) {
+    char *hex = malloc(sizeof(char) * (strlen(buf) * 2 + 1));
+    char *ret = hex;
+    int i;
+
+    for (i = 0; i < strlen(buf); i++) {
+        sprintf(hex, "%02X", buf[i]);
+        hex += 2;
+    }
+    *hex = '\0';
+    return ret;
+}
+
+char *ToString(char *buf) {
+    uint8_t *str = malloc(sizeof(char) * strlen(buf) / 2 + 1);
+    int i;
+    uint8_t tmp = 0;
+
+    for (i = 0; i < strlen(buf) / 2; i++) {
+        if (buf[i * 2] >= '0' && buf[i * 2] <= '9') {
+            tmp = buf[i * 2] - '0';
+        } else if (buf[i * 2] >= 'A' && buf[i * 2] <= 'Z') {
+            tmp = buf[i * 2] - 'A' + 10;
+        }
+        tmp <<= 4;
+        if (buf[i * 2 + 1] >= '0' && buf[i * 2 + 1] <= '9') {
+            tmp += buf[i * 2 + 1] - '0';
+        } else if (buf[i * 2 + 1] >= 'A' && buf[i * 2 + 1] <= 'Z') {
+            tmp += buf[i * 2 + 1] - 'A' + 10;
+        }
+        str[i] = tmp;
+    }
+    str[i] = '\0';
+    return str;
 }

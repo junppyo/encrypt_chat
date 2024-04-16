@@ -1,10 +1,9 @@
 #pragma once
-// #include "chat.h"
-#include "utils.h"
-#include <stdlib.h>
-#include <stdbool.h>
+#include "common.h"
 
 #define BUF_SIZE 512
+
+typedef struct array Array;
 
 enum Flags {
     WAIT_ID,
@@ -12,14 +11,16 @@ enum Flags {
     WAIT_REGIST,
     LOGIN,
     PUBLIC,
+    TRY_PRIVATE,
     PRIVATE
 };
 
 typedef struct user {
     int fd;
     char name[16];
-    uint8_t room_number;
+    int room_number;
     char *buf;
+    int buf_len;
     uint8_t status;
 } User;
 
