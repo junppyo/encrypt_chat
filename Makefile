@@ -34,7 +34,7 @@ clean:
 
 fclean:
 	$(MAKE) -C $(AES_DIR) fclean
-	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS)
+	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS) $(OBJS)
 	rm -rf $(SERVER) $(CLIENT) $(AES)
 	
 re: fclean all
