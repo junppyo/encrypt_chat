@@ -42,11 +42,14 @@ bool TryLogin(Server *server, User *user, char *buf) {
     char msg[32];
     if (!strcmp(buf, decrypt_db)) {
         sprintf(msg, "Welcome %s!\n", user->name);
+        write(user->fd, msg, strlen(msg));
+        PrintRoomList(server->rooms, user);
         ret = true;
     }
-    else 
+    else {
         sprintf(msg, "Login Failed: Wrong password\n");
-    write(user->fd, msg, strlen(msg));
+        write(user->fd, msg, strlen(msg));
+    }
     free(saved_pw);
     free(pw_str);
     free(decrypt_db);

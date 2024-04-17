@@ -3,6 +3,7 @@
 
 #define BUF_SIZE 512
 
+typedef struct server Server;
 typedef struct array Array;
 
 enum Flags {
@@ -10,9 +11,9 @@ enum Flags {
     WAIT_PASS,
     WAIT_REGIST,
     LOGIN,
-    PUBLIC,
     TRY_PRIVATE,
-    PRIVATE
+    PRIVATE,
+    PUBLIC,
 };
 
 typedef struct user {
@@ -27,3 +28,4 @@ typedef struct user {
 User *NewUser(int fd);
 User *UserByFd(Array *users, int fd);
 void DeleteUserByFd(Array *users, int fd);
+int DisconnectUser(Server *server, int fd);

@@ -1,7 +1,9 @@
 CC = gcc
 INC = -I./incs/
-SERVER_SRCS = $(addprefix ./srcs/server/, utils.c user.c chat.c server.c db.c command.c room.c)
+SRCS = $(addprefix ./srcs/, utils.c)
+SERVER_SRCS = $(addprefix ./srcs/server/, user.c chat.c server.c db.c command.c room.c)
 CLIENT_SRCS = $(addprefix ./srcs/client/, client.c)
+OBJS = $(SRCS:%.c=%.o)
 SERVER_OBJS = $(SERVER_SRCS:%.c=%.o)
 CLIENT_OBJS = $(CLIENT_SRCS:%.c=%.o)
 SERVER = server
@@ -18,11 +20,11 @@ $(AES): $(AES_DIR)/aes.o
 	cp $(AES_DIR)/$(AES) ./$(AES)
 	sudo cp ./$(AES) /lib/
 
-$(SERVER): $(SERVER_OBJS)
-	$(CC) -g $(INC) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
+$(SERVER): $(SERVER_OBJS) $(OBJS)
+	$(CC) -g $(INC) $(OBJS) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
 
-$(CLIENT): $(CLIENT_OBJS)
-	$(CC) $(INC) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
+$(CLIENT): $(CLIENT_OBJS) $(OBJS)
+	$(CC) $(INC) $(OBJS) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
 
 %.o: %.c
 	$(CC) -g -c $(INC) $< -o $@

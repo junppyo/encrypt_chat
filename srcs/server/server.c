@@ -82,6 +82,8 @@ void CheckEvent(Server* server, int new_event) {
             continue;
         }
         if (current->flags & EV_EOF) {
+            printf("disconnect user\n");
+            DisconnectUser(server, current->ident);
             DeleteUserByFd(server->users, current->ident);
             close(current->ident);
             continue;
@@ -155,15 +157,25 @@ int ReadFlag(Server *server, struct kevent *event) {
                 }
                 break;
             case LOGIN:
-                JoinRoom(server, user, user->buf);
-                user->status = PUBLIC;
+                if (!JoinRoom(server, user, user->buf)) {
+                    char *msg = "Create Failed\n";
+                    write(user->fd, msg, strlen(msg));
+                    PrintRoomList(server->rooms, user);
+                }
+                else user->status = PUBLIC;
                 break;
             case TRY_PRIVATE:
+                printf("try private\n");
                 if (user->status == TRY_PRIVATE) {
-                    Room *room = FindRoomByNumber(server->rooms, user->fd);
-                    char *room_pw = Decrypt(server->aes, room->password, strlen(room->password));
+                    TryPrivateRoom(server, user);
                 }
+                break;
+            case PRIVATE:
+                printf("in private\n");
+                SendMsg(server, user);
+                break;
             case PUBLIC:
+                printf("in public\n");
                 SendMsg(server, user);
                 break;
         }

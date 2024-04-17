@@ -1,4 +1,4 @@
-#include "../incs/chat.h"
+ #include "../incs/chat.h"
 
 // Room *GetRoom(Server *server, uint8_t n) {
 //     Array *rooms = server->rooms;
@@ -49,13 +49,13 @@ void SendMsg(Server *server, User *user) {
         return ;
     }
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
+    write(room->log_fd, user->buf, user->buf_len);
+    printf("room user num : %d\n", room->user_fds->size);
     for (i = 0; i < room->user_fds->size; i++) {
         int *fd = room->user_fds->data[i];
         if (*fd == user->fd) continue;
         write(*fd, user->buf, user->buf_len);
-        printf("sendmsg %d : %s\n", fd, user->buf);
+        printf("sendmsg %d : %s\n", *fd, user->buf);
     }    
-
-
 }
 

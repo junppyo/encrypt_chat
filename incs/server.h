@@ -27,3 +27,4 @@ int ErrorFlag(Server *server, struct kevent *event);
 int ReadFlag(Server *server, struct kevent *event);
 int WriteFlag(Server *server, struct kevent *event);
 int ConnectClient(Server *server);
+int DisconnectUser(Server *server, int fd);

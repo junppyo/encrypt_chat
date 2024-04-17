@@ -43,3 +43,16 @@ void DeleteUserByFd(Array *users, int fd) {
         }
     }
 }
+
+int DisconnectUser(Server *server, int fd) {
+    User *user = UserByFd(server->users, fd);
+    printf(" disconnect user room num : %d\n", user->room_number);
+    if (user->room_number != 0) {
+        if (user->status == PRIVATE || user->status == PUBLIC) {
+            LeaveRoom(server, user);
+        }
+    }
+    DeleteUserByFd(server->users, fd);
+
+    close(fd);
+}
