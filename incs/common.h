@@ -6,6 +6,7 @@
 #include <sys/event.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -22,6 +23,7 @@
 #include "db.h"
 #include "../aes/aes.h"
 #include "server.h"
+#include <signal.h>
 
 #define LOGIN_WORD_LIMIT 16
 #define BUF_SIZE 512

@@ -25,6 +25,7 @@ typedef struct array {
 
 // void Clear(Array *array);
 Array* InitArray(size_t data_size);
+void *NewElement(Array *arr);
 void *InsertArray(Array *arr, void *data);
 void EraseArray(Array *arr, size_t n);
 void ClearArray(Array *arr);

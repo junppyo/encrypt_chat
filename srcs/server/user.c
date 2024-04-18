@@ -11,7 +11,7 @@ User *NewUser(int fd) {
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &_linger, sizeof(_linger));    
     memset(buf, 0, sizeof(char) * BUF_SIZE);
 
-    user->room_number = -1;
+    user->room_number = 0;
     user->fd = fd;
     user->buf = buf;
     user->buf_len = 0;
@@ -34,7 +34,7 @@ User *UserByFd(Array *users, int fd) {
 
 void DeleteUserByFd(Array *users, int fd) {
     int i;
-
+    printf("DeleteUserByFd start\n");
     for (i = 0; i < users->size; i++) {
         User *user = users->data[i];
         if (user->fd == fd) {
@@ -42,6 +42,7 @@ void DeleteUserByFd(Array *users, int fd) {
             break;
         }
     }
+    printf("DeleteUserByFd end\n");
 }
 
 int DisconnectUser(Server *server, int fd) {

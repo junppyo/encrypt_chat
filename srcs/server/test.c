@@ -3,13 +3,17 @@
 #include <stdio.h>
 // #include "../../aes/aes.h"
 // uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
+#include <fcntl.h>
+#include <string.h>
+
+int *test() {
+    return NULL;
+}
 
 int main() {
-    // uint8_t buf[] = {0xCB, 0x70, 0xC0, 0x30, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C};
-    // uint8_t *buf = "ddf";
-    // Aes *aes = AesInit(KEY);
-    char *msg;
-    // char *tmp = "afwef";
-    sprintf(msg, "fawfw");
-    // printf("%s\n", msg);
+    if (test()) {
+        printf("1");
+    } else {
+        printf("asdf");
+    }
 }

@@ -17,7 +17,7 @@ Array* InitArray(size_t data_size) {
     return arr;
 }
 
-void *InsertArray(Array *arr, void *data) {
+void *NewElement(Array *arr) {
     if (arr->size == arr->capacity) {
         arr->capacity *= 2;
         arr->data = (void **)realloc(arr->data, arr->capacity * sizeof(void *));
@@ -25,7 +25,21 @@ void *InsertArray(Array *arr, void *data) {
     }
     arr->data[arr->size] = malloc(arr->data_size);
     if (arr->data[arr->size] == NULL) return NULL;
-    memcpy(arr->data[arr->size], data, arr->data_size);
+    // memcpy(arr->data[arr->size], data, arr->data_size);
+    arr->size++;
+    
+    return arr->data[arr->size - 1];
+}
+void *InsertArray(Array *arr, void *data) {
+    if (arr->size == arr->capacity) {
+        arr->capacity *= 2;
+        arr->data = (void **)realloc(arr->data, arr->capacity * sizeof(void *));
+        if (arr->data == NULL) return NULL;
+    }
+    arr->data[arr->size] = data;
+    // arr->data[arr->size] = malloc(arr->data_size);
+    // if (arr->data[arr->size] == NULL) return NULL;
+    // memcpy(arr->data[arr->size], data, arr->data_size);
     arr->size++;
     
     return arr->data[arr->size - 1];
@@ -57,6 +71,7 @@ void ClearArray(Array *arr) {
 
 
 char *ToHex(uint8_t *buf) {
+    printf("ToHex : %s\n", buf);
     char *hex = malloc(sizeof(char) * (strlen(buf) * 2 + 1));
     if (!hex) return NULL;
     char *ret = hex;
@@ -71,6 +86,7 @@ char *ToHex(uint8_t *buf) {
 }
 
 char *ToString(char *buf) {
+    printf("ToString : %s\n", buf);
     uint8_t *str = malloc(sizeof(char) * strlen(buf) / 2 + 1);
     if (!str) return NULL;
     int i;
@@ -91,6 +107,7 @@ char *ToString(char *buf) {
         str[i] = tmp;
     }
     str[i] = '\0';
+    printf("String : %s\n", str);
     return str;
 }
 

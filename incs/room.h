@@ -8,10 +8,11 @@ typedef struct array Array;
 typedef struct aes Aes;
 
 typedef struct room {
-    uint16_t number;
+    size_t number;
     bool is_secret;
     char name[16];
-    char password[32];
+    char password[16];
+
     Aes *aes;
     Array *user_fds;
     int log_fd;
@@ -25,6 +26,6 @@ Room *FindRoomByNumber(Array *rooms, int n);
 int JoinRoom(Server *server, User *user, char *name);
 Room *MakeRoom(Server *server, char *buf);
 int LeaveRoom(Server *server, User *user);
-int RequestRoomPass(Room *room, User *user);
+void RequestRoomPass(Room *room, User *user);
 int TryPrivateRoom(Server *server, User *user);
 char *Strcat(char *s1, char *s2);

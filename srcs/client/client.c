@@ -8,14 +8,28 @@
 #include "stdbool.h"
 #include "../../aes/aes.h"
 
-#define ADDRESS "123.123.123.1"
-#define PORT 8083
+#define ADDRESS "127.0.0.1"
 #define BUF_SIZE 512
+
+enum Flags {
+    LOGOUT,
+    LOGIN,
+    PRIVATE,
+    PUBLIC,
+};
+
+typedef struct client {
+    char name[16];
+    uint8_t status;
+    Aes *room_aes;
+} Client;
 
 uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
 char name[16];
 bool private = false;
 Aes *aes;
+
+Client user;
 
 int Receive(void *sock) {
     int n;
@@ -26,11 +40,73 @@ int Receive(void *sock) {
 
     while (!err) {
         n = read(*sock_fd, buf, BUF_SIZE);
-
-        write(1, buf, n);
+        printf("recv size : %d\n", n);
+        printf("user status : %d\n", user.status);
+        if (user.status == LOGOUT) {
+            write(1, buf, n);
+            if (!strncmp(buf, "Welcome", 7)) {
+                user.status = LOGIN;
+            }
+        }
+        else if (user.status == LOGIN && n == 16) {
+            printf("join private\n");
+            user.status = PRIVATE;
+            for (int i = 0; i < 16; i++) {
+                printf("%02X ", buf[i]);
+            }
+            user.room_aes = AesInit((uint8_t*)buf);
+            printf("init aes\n");
+        } else if (user.status == LOGIN && !strcmp("JOIN", buf)) {
+            printf("join public\n");
+            user.status = PUBLIC;
+        } else if (user.status == PRIVATE || user.status == PUBLIC) {
+            if (!strncmp(buf, "Leave", 5)) {
+                write(1, buf, strlen(buf));
+                user.status = LOGIN;
+            } else {
+                if (user.status == PRIVATE) {
+                    printf("receive by private\n");
+                    printf("cipher : %s len : %d\n", buf, n);
+                    char *decrypt = Decrypt(user.room_aes, buf, n);
+                    write(1, decrypt, strlen(decrypt));
+                    write(1, "\n", 1);
+                } else {
+                    write(1, buf, n);
+                    write(1, "\n", 1);
+                }
+            }
+        }
         memset(buf, 0, n);
         socklen_t len = sizeof(err);
         err = getsockopt(*sock_fd, SOL_SOCKET, SO_ERROR, &err, &len);
+    }
+}
+
+int SendMsg(int fd, char *buf) {
+    printf("sendmsg\n");
+    int n;
+    if (!strcmp("exit", buf)) {
+        write(fd, buf, strlen(buf));
+        return 0;
+    }
+    int len = strlen(buf);
+    printf("len : %d buf : %s\n", len, buf);
+    if (user.status == PRIVATE) {
+        printf("send private");
+        uint8_t *encrypt = Encrypt(user.room_aes, buf);
+        
+        if (len % 16 == 0) {
+            printf("%d len : %d write : %s\n" , fd, len, encrypt);
+            n = write(fd, encrypt, len);
+        }
+        else {
+            printf("%d len : %d write : %s\n" , fd, ((len / 16) + 1) * 16, encrypt);
+            n = write(fd, encrypt, ((len / 16) + 1) * 16);
+        }
+        free(encrypt);
+        encrypt = NULL;
+    } else {
+        n = write(fd, buf, strlen(buf));
     }
 }
 
@@ -40,11 +116,8 @@ int Send(void *sock) {
     char buf[BUF_SIZE];
     while (1) {
         scanf("%s", buf);
-        if (private && buf[0] != '#') {
-            char *encrypt = Encrypt(aes, buf);
-            n = write(*sock_fd, encrypt, strlen(encrypt));
-            free(encrypt);
-            encrypt = NULL;
+        if (user.status == PRIVATE || user.status == PUBLIC) {
+            SendMsg(*sock_fd, buf);
         } else {
             n = write(*sock_fd, buf, strlen(buf));
         }
@@ -58,12 +131,8 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in address;
     uint8_t buf[BUF_SIZE] = {0};
     pthread_t thread1, thread2;
+    user.status = LOGOUT;
     aes = AesInit(KEY);
-    // pthread_mutex_t *mutex = malloc(sizeof(pthread_mutex_t));
-    // if (!mutex) {
-    //     printf("mutex allocate fail\n");
-    //     return -1;
-    // }
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {

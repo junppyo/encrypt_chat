@@ -2,6 +2,7 @@
 #include "/usr/include/mysql/mysql.h"
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #define DB_HOST "localhost"
 #define DB_USER "root"

@@ -14,38 +14,39 @@ char *GetTime() {
 }
 
 Room *InitRoom(Server *server, char *roomname, char *password) {
-    Room *room = malloc(sizeof(Room));
+    printf("\t Init Room\n");
+    Room *room = NewElement(server->rooms);
     char *filename = malloc(sizeof(char) * 40);
-
     if (!room || !filename) {
          return NULL;
     }
+    
     strcpy(room->name, roomname);
-    // if (!password) {
-    printf("password : %s\n", password);
-    printf("pass len : %d\n", strlen(password));
     if (strlen(password) == 0) {
         room->is_secret = false;
     }
     else {
         room->is_secret = true;
         strcpy(room->password, password);
+        uint8_t *encrypt = Encrypt(server->aes, password);
+        room->aes = AesInit(encrypt);
+        printf("room aes : %s\n", ToHex(encrypt));
+        free(encrypt);
     }
 
     room->user_fds = InitArray(sizeof(int));
     if (!room->user_fds) return NULL;
-    printf("\t Init Room\n");
-    printf("datasize : %d\tsize: %d\n", room->user_fds->data_size, room->user_fds->size);
     
     char *gettime = GetTime();
     sprintf(filename, "%s%s.log", gettime, roomname);
-    room->log_fd = fopen(filename, "w");
-    InsertArray(server->rooms, (void *)room);
-    room->number = server->rooms->size;
-
+    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+    room->log_fd = open(filename, O_CREAT | O_WRONLY, S_IRWXO);
+    room->number = server->rooms->size + 1;
+    // Room *ret = InsertArray(server->rooms, (void *)room);
     free(gettime);
     free(filename);
     return room;
+    // return ret;
 }
 
 void PrintRoomList(Array *rooms, User *user) {
@@ -65,6 +66,8 @@ void PrintRoomList(Array *rooms, User *user) {
         write(fd, " ", 1);
     }
     write(fd, "\n", 1);
+    char *msg = "Please input the room name : ";
+    write(fd, msg, strlen(msg));
 }
 
 Room *FindRoomByName(Array *rooms, char *name) {
@@ -79,7 +82,6 @@ Room *FindRoomByName(Array *rooms, char *name) {
 
 Room *FindRoomByNumber(Array *rooms, int n) {
     int i;
-    printf("find n : %d , size : %d\n", n, rooms->size);
     for (i = 0; i < rooms->size; i++) {
         Room *room = rooms->data[i];
         if (room->number == n) return room;
@@ -103,7 +105,6 @@ Room *MakeRoom(Server *server, char *buf) {
     else {
         char *name = substr(buf, 0, i);
         char *pass = substr(buf, i + 1, strlen(buf));
-        printf("%d room name : %s     room pass : %s\n", room->number, name, pass);
 
         if (!name || !pass) return NULL;
         room = InitRoom(server, name, pass);
@@ -119,24 +120,41 @@ Room *MakeRoom(Server *server, char *buf) {
 int JoinRoom(Server *server, User *user, char *name) {
     Room *room = FindRoomByName(server->rooms, name);
     
-    if (room == NULL) {
+    if (!room) {
         room = MakeRoom(server, name);
-        if (!room) return 0;
+        user->room_number = room->number;
+        int *tmp = NewElement(room->user_fds);
+        *tmp = user->fd;
+        if (!room) return 1;
+        if (room->is_secret) {
+            user->status = PRIVATE;
+            write(user->fd, room->aes->key, 16);
+        }
+        else {
+            user->status = PUBLIC;
+            write(user->fd, "JOIN", 4);
+        }
+        return 0;
     } else {
         printf("Join room\n");
         if (room->is_secret) {
+            printf("room number : %d\n", room->number);
             RequestRoomPass(room, user);
-            return 1;
+            return 0;
         }
     }
     user->status = PUBLIC;
-    InsertArray(room->user_fds, &user->fd);
+    user->room_number = room->number;
+    int *fd = NewElement(room->user_fds);
+    *fd = user->fd;
     printf("\tuser %d join room number %d\n", user->fd, user->room_number);
     return 0;
 }
 
 int LeaveRoom(Server *server, User *user) {
     int i, j;
+    printf("LeaveRoom start\n");
+    printf("user room_number : %d\n", user->room_number);
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
     printf("Leave Room %s\n", room->name);
     for (i = 0; i < room->user_fds->size; i++) {
@@ -147,44 +165,55 @@ int LeaveRoom(Server *server, User *user) {
             break;
         }
     }
+    printf("room user_fds size : %d\n", room->user_fds->size);
     if (room->user_fds->size == 0) {
         printf("Delete Room %s\n", room->name);
         for (i = 0; i < server->rooms->size; i++) {
             Room *tmp = server->rooms->data[i];
             if (tmp->number == room->number) {
                 printf("\tDelete %d %s room\n", tmp->number, tmp->name);
+                close(room->log_fd);
                 EraseArray(server->rooms, i);
                 break;
             }
         }
-
     }
+    user->status = LOGIN;
+    printf("LeaveRoom end\n");
     
     return 0;
 }
 
-int RequestRoomPass(Room *room, User *user) {
+void RequestRoomPass(Room *room, User *user) {
     char *msg = "This is private room.\nPlease enter room password : ";
     printf("request password\n");
     
     write(user->fd, msg, strlen(msg));
     user->room_number = room->number;
+    printf("room %d request pass to user %d \n", room->number, user->fd);
     user->status = TRY_PRIVATE;
 }
 
 int TryPrivateRoom(Server *server, User *user) {
     printf("try private room\n");
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
-    
+    char *tmp = ToString(room->password);
+    char *pass = Decrypt(server->aes, tmp, 16);
+    printf("room pass : %s\n", pass);
+    int *fds;
+
     if (!strcmp(user->buf, room->password)) {
-        if (!InsertArray(room->user_fds, &user->fd)) {
+        if (!(fds = NewElement(room->user_fds))) {
             user->status = LOGIN;
             printf("insert to user_fds failed\n");
-             return false;
+            return false;
         }
+        *fds = user->fd;
         user->status = PRIVATE;
         printf("\tuser %d join private room number %d\n", user->fd, user->room_number);
         printf("succes");
+        printf("room KEY : %s\n", room->password);
+        write(user->fd, room->aes->key, 16);
         return true;
     } else {
         user->status = LOGIN;

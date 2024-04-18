@@ -19,7 +19,7 @@ enum Flags {
 typedef struct user {
     int fd;
     char name[16];
-    int room_number;
+    size_t room_number;
     char *buf;
     int buf_len;
     uint8_t status;
