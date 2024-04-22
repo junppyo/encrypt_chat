@@ -14,9 +14,9 @@ char *GetTime() {
 }
 
 Room *InitRoom(Server *server, char *roomname, char *password) {
-    printf("\t Init Room\n");
     Room *room = NewElement(server->rooms);
     char *filename = malloc(sizeof(char) * 40);
+    uint8_t *encrypt;
     if (!room || !filename) {
          return NULL;
     }
@@ -24,14 +24,14 @@ Room *InitRoom(Server *server, char *roomname, char *password) {
     strcpy(room->name, roomname);
     if (strlen(password) == 0) {
         room->is_secret = false;
+        room->aes = NULL;
+        encrypt = NULL;
     }
     else {
         room->is_secret = true;
         strcpy(room->password, password);
-        uint8_t *encrypt = Encrypt(server->aes, password);
+        encrypt = Encrypt(server->aes, password);
         room->aes = AesInit(encrypt);
-        printf("room aes : %s\n", ToHex(encrypt));
-        free(encrypt);
     }
 
     room->user_fds = InitArray(sizeof(int));
@@ -42,9 +42,15 @@ Room *InitRoom(Server *server, char *roomname, char *password) {
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     room->log_fd = open(filename, O_CREAT | O_WRONLY, S_IRWXO);
     room->number = server->rooms->size + 1;
-    // Room *ret = InsertArray(server->rooms, (void *)room);
+    char *tmp = ToHex(encrypt);
+    DbCreateLog(server->db, filename, tmp);
+
+    if (tmp)
+        free(tmp);
     free(gettime);
     free(filename);
+    if (encrypt)
+        free(encrypt);
     return room;
     // return ret;
 }
@@ -117,15 +123,40 @@ Room *MakeRoom(Server *server, char *buf) {
     return room;
 }
 
-int JoinRoom(Server *server, User *user, char *name) {
-    Room *room = FindRoomByName(server->rooms, name);
+int JoinRoom(Server *server, User *user, char *buf) {
+    int i;
+    char *name;
+    char *pass;
+    Room *room;
+
+    printf("join room : %s\n", buf);
+    for (i = 0; i < strlen(buf); i++) {
+        if (buf[i] == '/') break;
+    }
+    if (i == strlen(buf)) {
+        if (i > 16) {
+            return 1;
+        }
+        name = substr(buf, 0, i);
+        pass = substr(buf, i, strlen(buf));
+    } else {
+        name = substr(buf, 0, i);
+        pass = substr(buf, i + 1, strlen(buf));
+    }
+    if (!name || !pass) return 1;
+
+    printf("name : %s\npass: %s\n", name, pass);
+    room = FindRoomByName(server->rooms, name);
     
     if (!room) {
-        room = MakeRoom(server, name);
+        printf("Make room\n");
+        room = InitRoom(server, name, pass);
+        free(name);
+        if (pass) free(pass);
+        if (!room) return 1;
         user->room_number = room->number;
         int *tmp = NewElement(room->user_fds);
         *tmp = user->fd;
-        if (!room) return 1;
         if (room->is_secret) {
             user->status = PRIVATE;
             write(user->fd, room->aes->key, 16);
@@ -137,42 +168,59 @@ int JoinRoom(Server *server, User *user, char *name) {
         return 0;
     } else {
         printf("Join room\n");
+        user->room_number = room->number;
         if (room->is_secret) {
-            printf("room number : %d\n", room->number);
-            RequestRoomPass(room, user);
-            return 0;
+            if (strlen(pass) != 0) {
+                printf("immediately join private \n");
+                strcpy(user->buf, pass);
+                free(name);
+                free(pass);
+                name = NULL;
+                pass = NULL;
+                return !TryPrivateRoom(server, user);
+            } else {
+                printf("room number : %ld\n", room->number);
+                RequestRoomPass(room, user);
+            }
+        } else {
+            user->status = PUBLIC;
+            write(user->fd, "JOIN", 4);
+            int *fd = NewElement(room->user_fds);
+            *fd = user->fd;
+            printf("\tuser %d join room number %ld\n", user->fd, user->room_number);
         }
+        free(name);
+        free(pass);
+        name = NULL;
+        pass = NULL;
     }
-    user->status = PUBLIC;
-    user->room_number = room->number;
-    int *fd = NewElement(room->user_fds);
-    *fd = user->fd;
-    printf("\tuser %d join room number %d\n", user->fd, user->room_number);
     return 0;
 }
 
 int LeaveRoom(Server *server, User *user) {
     int i, j;
     printf("LeaveRoom start\n");
-    printf("user room_number : %d\n", user->room_number);
+    printf("user room_number : %ld\n", user->room_number);
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
     printf("Leave Room %s\n", room->name);
     for (i = 0; i < room->user_fds->size; i++) {
         int *tmp = room->user_fds->data[i];
         if (*tmp == user->fd) {
-            printf("\tuser %d leave room number %d\n", user->fd, room->number);
+            printf("\tuser %d leave room number %ld\n", user->fd, room->number);
             EraseArray(room->user_fds, i);
             break;
         }
     }
-    printf("room user_fds size : %d\n", room->user_fds->size);
+    printf("room user_fds size : %ld\n", room->user_fds->size);
     if (room->user_fds->size == 0) {
         printf("Delete Room %s\n", room->name);
         for (i = 0; i < server->rooms->size; i++) {
             Room *tmp = server->rooms->data[i];
             if (tmp->number == room->number) {
-                printf("\tDelete %d %s room\n", tmp->number, tmp->name);
+                printf("\tDelete %ld %s room\n", tmp->number, tmp->name);
                 close(room->log_fd);
+                if (room->aes) free(room->aes);
+                FreeArray(room->user_fds);
                 EraseArray(server->rooms, i);
                 break;
             }
@@ -190,16 +238,15 @@ void RequestRoomPass(Room *room, User *user) {
     
     write(user->fd, msg, strlen(msg));
     user->room_number = room->number;
-    printf("room %d request pass to user %d \n", room->number, user->fd);
     user->status = TRY_PRIVATE;
 }
 
 int TryPrivateRoom(Server *server, User *user) {
     printf("try private room\n");
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
-    char *tmp = ToString(room->password);
-    char *pass = Decrypt(server->aes, tmp, 16);
-    printf("room pass : %s\n", pass);
+    // char *tmp = ToString(room->password);
+    // char *pass = Decrypt(server->aes, tmp, 16);
+    // printf("room pass : %s\n", pass);
     int *fds;
 
     if (!strcmp(user->buf, room->password)) {
@@ -210,8 +257,6 @@ int TryPrivateRoom(Server *server, User *user) {
         }
         *fds = user->fd;
         user->status = PRIVATE;
-        printf("\tuser %d join private room number %d\n", user->fd, user->room_number);
-        printf("succes");
         printf("room KEY : %s\n", room->password);
         write(user->fd, room->aes->key, 16);
         return true;
@@ -219,4 +264,16 @@ int TryPrivateRoom(Server *server, User *user) {
         user->status = LOGIN;
     }
     return false;
+}
+
+void ClearRooms(Array *rooms) {
+    int i;
+
+    for (i = 0; i < rooms->size; i++) {
+        Room *room = rooms->data[i];
+        if (room->aes) free(room->aes);
+        ClearArray(room->user_fds);
+        free(room->user_fds);
+    }
+    ClearArray(rooms);
 }

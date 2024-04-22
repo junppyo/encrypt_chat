@@ -1,5 +1,6 @@
 #pragma once
 
+#include "/usr/include/mysql/mysql.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -9,6 +10,7 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -28,6 +30,3 @@
 #define LOGIN_WORD_LIMIT 16
 #define BUF_SIZE 512
 
-int SetId(Server *server, User *user, char *buf);
-int CreateUser(Server *server, User *user, char *buf);
-bool TryLogin(Server *server, User *user, char *buf);

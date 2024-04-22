@@ -31,6 +31,11 @@ Aes *aes;
 
 Client user;
 
+void PrintBuf(char *buf, int len) {
+    write(1, buf, len);
+    write(1, "\n", 1);
+}
+
 int Receive(void *sock) {
     int n;
     int *sock_fd = (int *)sock;
@@ -40,8 +45,6 @@ int Receive(void *sock) {
 
     while (!err) {
         n = read(*sock_fd, buf, BUF_SIZE);
-        printf("recv size : %d\n", n);
-        printf("user status : %d\n", user.status);
         if (user.status == LOGOUT) {
             write(1, buf, n);
             if (!strncmp(buf, "Welcome", 7)) {
@@ -51,30 +54,25 @@ int Receive(void *sock) {
         else if (user.status == LOGIN && n == 16) {
             printf("join private\n");
             user.status = PRIVATE;
-            for (int i = 0; i < 16; i++) {
-                printf("%02X ", buf[i]);
-            }
             user.room_aes = AesInit((uint8_t*)buf);
-            printf("init aes\n");
         } else if (user.status == LOGIN && !strcmp("JOIN", buf)) {
             printf("join public\n");
             user.status = PUBLIC;
         } else if (user.status == PRIVATE || user.status == PUBLIC) {
-            if (!strncmp(buf, "Leave", 5)) {
-                write(1, buf, strlen(buf));
+            if (!strncmp(buf, "Leave\n", 6)) {
                 user.status = LOGIN;
+                PrintBuf(buf, strlen(buf));
             } else {
                 if (user.status == PRIVATE) {
-                    printf("receive by private\n");
-                    printf("cipher : %s len : %d\n", buf, n);
                     char *decrypt = Decrypt(user.room_aes, buf, n);
-                    write(1, decrypt, strlen(decrypt));
-                    write(1, "\n", 1);
+                    PrintBuf(decrypt, strlen(decrypt));
                 } else {
-                    write(1, buf, n);
-                    write(1, "\n", 1);
+                    PrintBuf(buf, n);
                 }
             }
+        } else {
+            printf("status: login\n");
+            PrintBuf(buf, n);
         }
         memset(buf, 0, n);
         socklen_t len = sizeof(err);
@@ -83,24 +81,19 @@ int Receive(void *sock) {
 }
 
 int SendMsg(int fd, char *buf) {
-    printf("sendmsg\n");
     int n;
     if (!strcmp("exit", buf)) {
         write(fd, buf, strlen(buf));
         return 0;
     }
     int len = strlen(buf);
-    printf("len : %d buf : %s\n", len, buf);
     if (user.status == PRIVATE) {
-        printf("send private");
         uint8_t *encrypt = Encrypt(user.room_aes, buf);
         
         if (len % 16 == 0) {
-            printf("%d len : %d write : %s\n" , fd, len, encrypt);
             n = write(fd, encrypt, len);
         }
         else {
-            printf("%d len : %d write : %s\n" , fd, ((len / 16) + 1) * 16, encrypt);
             n = write(fd, encrypt, ((len / 16) + 1) * 16);
         }
         free(encrypt);
@@ -127,6 +120,11 @@ int Send(void *sock) {
 
 
 int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        printf("need address and port number\n");
+        printf("./client (ADDRESS) (PORT)\n");
+        return -1;
+    }
     int sock, inet, conn;
     struct sockaddr_in address;
     uint8_t buf[BUF_SIZE] = {0};
@@ -140,8 +138,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     address.sin_family = AF_INET;
-    address.sin_port = htons(atoi(argv[1]));
-    address.sin_addr.s_addr = inet_addr(ADDRESS);
+    address.sin_port = htons(atoi(argv[2]));
+    address.sin_addr.s_addr = inet_addr(argv[1]);
 
     conn = connect(sock, (struct sockaddr *)&address, sizeof(address));
     
@@ -153,8 +151,10 @@ int main(int argc, char *argv[]) {
     // if (pthread_mutex_init(mutex, NULL) < 0) {
     //     printf("create mutex error\n");
     // }
-    pthread_create(&thread1, NULL, Receive, &sock);
-    pthread_create(&thread2, NULL, Send, &sock);
+    // pthread_create(&thread1, NULL, Receive, &sock);
+    // pthread_create(&thread2, NULL, Send, &sock);
+    pthread_create(&thread1, NULL, (void*)Receive, &sock);
+    pthread_create(&thread2, NULL, (void*)Send, &sock);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 

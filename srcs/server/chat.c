@@ -11,14 +11,14 @@ void SendMsg(Server *server, User *user) {
     }
     if (!strcmp(user->buf, "exit")) {
         LeaveRoom(server, user);
-        write(user->fd, "Leave the chatroom\n", 5);
+        write(user->fd, "Leave\n", 6);
         PrintRoomList(server->rooms, user);
         return ;
     }
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
     write(room->log_fd, user->buf, user->buf_len);
     write(room->log_fd, "\n", 1);
-    printf("room user num : %d\n", room->user_fds->size);
+    printf("room user num : %ld\n", room->user_fds->size);
     for (i = 0; i < room->user_fds->size; i++) {
         int *fd = room->user_fds->data[i];
         printf("%d  send user fd : %d       room user fd : %d\n", i, user->fd, *fd);

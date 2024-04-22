@@ -70,8 +70,20 @@ void Run(Server *server) {
         ClearArray(server->changed);
         CheckEvent(server, new_event);
     }
-    printf("close socket\n");
+    CloseServer(server);
+}
+
+void CloseServer(Server *server) {
+    close(server->kqueue_fd);
+    FreeArray(server->changed);
+    FreeArray(server->users);
+    FreeArray(server->rooms);
+    FreeArray(server->read_fds);
+    mysql_close(server->db);
+    mysql_library_end();
+    free(server->aes);
     close(server->sock);
+    free(server);
 }
 
 void CheckEvent(Server* server, int new_event) {
@@ -162,16 +174,15 @@ int ReadFlag(Server *server, struct kevent *event) {
                 break;
             case LOGIN:
                 if (JoinRoom(server, user, user->buf)) {
-                    char *msg = "Create Failed\n";
+                    char *msg = "Create or Join Failed\n";
+                    printf("%s", msg);
                     write(user->fd, msg, strlen(msg));
                     PrintRoomList(server->rooms, user);
                 }
                 break;
             case TRY_PRIVATE:
                 printf("try private\n");
-                if (user->status == TRY_PRIVATE) {
-                    TryPrivateRoom(server, user);
-                }
+                TryPrivateRoom(server, user);
                 break;
             case PRIVATE:
                 printf("in private\n");
@@ -240,6 +251,5 @@ int main(int argc, char *argv[]) {
     Server *server = InitServer(atoi(argv[1]));
     
     Run(server);
-    close(server->sock);
     return 0;
 }

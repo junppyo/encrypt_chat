@@ -1,8 +1,5 @@
 #pragma once
-#include "/usr/include/mysql/mysql.h"
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
+#include "common.h"
 
 #define DB_HOST "localhost"
 #define DB_USER "root"
@@ -12,3 +9,4 @@
 char *DbGetUser(MYSQL* conn, char *buf);
 int DbCreateUser(MYSQL* conn, char *user, char *pass);
 MYSQL* DbInit();
+int DbCreateLog(MYSQL *conn, char *name, char *pass);

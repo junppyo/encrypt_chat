@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-#define ADDRESS "127.0.0.1"
+#define ADDRESS "192.168.1.24"
 #define PORT 8083
 extern uint8_t KEY[];
 
@@ -28,3 +28,4 @@ int ErrorFlag(Server *server, struct kevent *event);
 int ReadFlag(Server *server, struct kevent *event);
 int WriteFlag(Server *server, struct kevent *event);
 int ConnectClient(Server *server);
+void CloseServer(Server *server);

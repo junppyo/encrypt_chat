@@ -276,7 +276,7 @@ char *Decrypt(Aes *aes, char *buf, int size) {
         buf_ptr += _BLOCK_LEN;
     }
     plain[size] = '\0';
-    if (plain[size - 1] < 0x0F) {
+    if (plain[size - 1] <= 0x0F) {
         for (i = size - plain[size - 1]; i < size; i++) {
             plain[i] = 0;
         }

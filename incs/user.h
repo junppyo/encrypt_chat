@@ -29,3 +29,4 @@ User *NewUser(int fd);
 User *UserByFd(Array *users, int fd);
 void DeleteUserByFd(Array *users, int fd);
 int DisconnectUser(Server *server, int fd);
+void ClearUsers(Array *users);

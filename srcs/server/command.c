@@ -1,12 +1,12 @@
 #include "../../incs/command.h"
 
-int SetId(Server *server, User *user, char *buf) {
+void SetId(Server *server, User *user, char *buf) {
     printf("SetId : %s\n", buf);
-    memcpy(user->name, buf, strlen(buf));
+    strcpy(user->name, buf);
     printf("username : %s\n", user->name);
     char *msg;
-
-    if (DbGetUser(server->db, buf)) {
+    char *pass = DbGetUser(server->db, buf);
+    if (pass) {
         // Login
         printf("found user\n");
         user->status = WAIT_PASS;
@@ -19,6 +19,7 @@ int SetId(Server *server, User *user, char *buf) {
         msg = "Not exist user\nCreate the account\nPlease enter your password : ";
         int n = write(user->fd, msg, strlen(msg));
     }
+    free(pass);
 }
 
 void Login(Server *server, User *user) {
@@ -41,7 +42,6 @@ int CreateUser(Server *server, User *user, char *buf) {
 }
 
 bool TryLogin(Server *server, User *user, char *buf) {
-    printf("TryLogin : %s\n", buf);
     char *saved_pw = DbGetUser(server->db, user->name);
     char *pw_str = ToString(saved_pw);
     char *decrypt_db = Decrypt(server->aes, pw_str, LOGIN_WORD_LIMIT);
@@ -55,6 +55,7 @@ bool TryLogin(Server *server, User *user, char *buf) {
         sprintf(msg, "Login Failed: Wrong password\n");
         write(user->fd, msg, strlen(msg));
     }
+    free(saved_pw);
     free(pw_str);
     free(decrypt_db);
     return ret;

@@ -34,20 +34,19 @@ User *UserByFd(Array *users, int fd) {
 
 void DeleteUserByFd(Array *users, int fd) {
     int i;
-    printf("DeleteUserByFd start\n");
     for (i = 0; i < users->size; i++) {
         User *user = users->data[i];
         if (user->fd == fd) {
+            free(user->buf);
             EraseArray(users, i);
             break;
         }
     }
-    printf("DeleteUserByFd end\n");
 }
 
 int DisconnectUser(Server *server, int fd) {
     User *user = UserByFd(server->users, fd);
-    printf(" disconnect user room num : %d\n", user->room_number);
+    printf(" disconnect user room num : %ld\n", user->room_number);
     if (user->room_number != 0) {
         if (user->status == PRIVATE || user->status == PUBLIC) {
             LeaveRoom(server, user);
@@ -56,4 +55,14 @@ int DisconnectUser(Server *server, int fd) {
     DeleteUserByFd(server->users, fd);
 
     close(fd);
+}
+
+void ClearUsers(Array *users) {
+    int i;
+
+    for (i = 0; i < users->size; i++) {
+        User *user = users->data[i];
+        free(user->buf);
+    }
+    ClearArray(users);
 }

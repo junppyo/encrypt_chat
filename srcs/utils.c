@@ -65,12 +65,23 @@ void ClearArray(Array *arr) {
     }
     arr->size = 0;
     // free(arr->data);
-
     // free(arr);
+}
+
+void FreeArray(Array *arr) {
+    int i;
+
+    for (i = 0; i < arr->size; i++) {
+        free(arr->data[i]);
+        arr->data[i] = NULL;
+    }
+    free(arr->data);
+    free(arr);
 }
 
 
 char *ToHex(uint8_t *buf) {
+    if (!buf || strlen(buf) == 0) return NULL;
     printf("ToHex : %s\n", buf);
     char *hex = malloc(sizeof(char) * (strlen(buf) * 2 + 1));
     if (!hex) return NULL;
@@ -86,7 +97,6 @@ char *ToHex(uint8_t *buf) {
 }
 
 char *ToString(char *buf) {
-    printf("ToString : %s\n", buf);
     uint8_t *str = malloc(sizeof(char) * strlen(buf) / 2 + 1);
     if (!str) return NULL;
     int i;
@@ -107,7 +117,6 @@ char *ToString(char *buf) {
         str[i] = tmp;
     }
     str[i] = '\0';
-    printf("String : %s\n", str);
     return str;
 }
 
@@ -141,5 +150,34 @@ char *Strcat(char *s1, char *s2) {
     }
     ret[strlen(s1) + strlen(s2)] = '\0';
 
+    return ret;
+}
+
+char *MakeString(int args, ...) {
+    va_list ap;
+    char *ret;
+    int i, j;
+    int len = 0;
+    int p = 0;
+
+    va_start(ap, args);
+    for (i = 0; i < args; i++) {
+        len += strlen(va_arg(ap, char*));
+    }
+    va_end(ap);
+
+    ret = malloc(sizeof(char) * len + 1);
+    ret[len] = '\0';
+
+    va_start(ap, args);
+
+    for (i = 0; i < args; i++) {
+        char *tmp = va_arg(ap, char *);
+        for (j = 0; j < strlen(tmp); j++) {
+            ret[p + j] = tmp[j];
+        }
+        p += strlen(tmp);
+    }
+    va_end(ap);
     return ret;
 }
