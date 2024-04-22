@@ -2,8 +2,8 @@
 
 ## Installation
 
-```make``` 
 On root directory
+```make``` 
 
 ## Execute
 
@@ -13,7 +13,7 @@ Need the root privilage.
 ```sudo ./server (PORT)```
 
 ### Client
-```sudo ./client (PORT)```
+```sudo ./client (SERVER_ADDRESS) (PORT)```
 
 ## Instruction
 Private room is have '*' before room name
