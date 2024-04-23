@@ -13,7 +13,7 @@ CLIENT = client
 READER = reader
 LIB = -lkqueue -lmysqlclient
 AES_DIR = ./aes
-AES_FLAG = -I./aes/aes.h -L./ -laes
+AES_FLAG = -I./aes/aes.h -L. -laes
 AES = libaes.so
 
 all: $(AES) $(SERVER) $(CLIENT) $(READER)
@@ -21,23 +21,18 @@ all: $(AES) $(SERVER) $(CLIENT) $(READER)
 $(AES): $(AES_DIR)/aes.o
 	$(MAKE) -C $(AES_DIR)
 	cp $(AES_DIR)/$(AES) ./$(AES)
-	sudo cp ./$(AES) /lib/
 
 $(SERVER): $(SERVER_OBJS) $(OBJS)
 	$(CC) $(INC) $(OBJS) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
-# $(CC) -g -fsanitize=address $(INC) $(OBJS) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
 
 $(CLIENT): $(CLIENT_OBJS) $(OBJS)
 	$(CC) $(INC) $(OBJS) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
-# $(CC) -g -fsanitize=address $(INC) $(OBJS) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
 
 $(READER) : $(READER_OBJS) $(OBJS)
-	$(CC) $(INC) $(OBJS) $(READER_OBJS) -o $(READER) -lmysqlclient $(AES_FLAG)
-# $(CC) -g -fsanitize=address $(INC) $(OBJS) $(READER_OBJS) -o $(READER) -lmysqlclient $(AES_FLAG)
+	$(CC) -g $(INC) $(OBJS) $(READER_OBJS) -o $(READER) -lmysqlclient $(AES_FLAG)
 
 %.o: %.c
-	$(CC) -c $(INC) $< -o $@
-# $(CC) -g -fsanitize=address  -c $(INC) $< -o $@
+	$(CC) -g -c $(INC) $< -o $@
 
 clean:
 	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS) $(READER_OBJS)
@@ -46,6 +41,6 @@ fclean:
 	$(MAKE) -C $(AES_DIR) fclean
 	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS) $(READER_OBJS) $(OBJS)
 	rm -rf $(SERVER) $(CLIENT) $(READER) $(AES) 
-	sudo rm -rf *.log*
+	rm -rf *.log*
 	
 re: fclean all

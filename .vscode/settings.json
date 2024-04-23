@@ -5,6 +5,7 @@
         "aes.h": "c",
         "system_error": "c",
         "string": "c",
-        "string_view": "c"
+        "string_view": "c",
+        "log_reader.h": "c"
     }
 }

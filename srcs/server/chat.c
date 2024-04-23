@@ -27,4 +27,3 @@ void SendMsg(Server *server, User *user) {
         printf("sendmsg %d : %s\n", *fd, user->buf);
     }    
 }
-

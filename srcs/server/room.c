@@ -39,14 +39,16 @@ Room *InitRoom(Server *server, char *roomname, char *password) {
     
     char *gettime = GetTime();
     sprintf(filename, "%s%s.log", gettime, roomname);
-    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-    room->log_fd = open(filename, O_CREAT | O_WRONLY, S_IRWXO);
+    printf("filename : %s\n", filename);
+    mode_t mode = S_IRUSR | S_IWUSR | S_IRWXG | S_IRWXO;
+    room->log_fd = open(filename, O_CREAT | O_WRONLY, mode);
     room->number = server->rooms->size + 1;
-    char *tmp = ToHex(encrypt);
-    DbCreateLog(server->db, filename, tmp);
 
-    if (tmp)
+    if (room->is_secret) {
+        char *tmp = ToHex(encrypt);
+        DbCreateLog(server->db, filename, tmp);
         free(tmp);
+    }
     free(gettime);
     free(filename);
     if (encrypt)
@@ -123,6 +125,47 @@ Room *MakeRoom(Server *server, char *buf) {
     return room;
 }
 
+void SendJoinMsg(Room *room, User *user) {    
+    int i;
+    char *msg = MakeString(3, "[", user->name, " is join the room]\n");
+    if (room->is_secret) {
+        char *encrypt = Encrypt(room->aes, msg);
+        
+        for (i = 0; i < room->user_fds->size;i++) {
+            int *fd = room->user_fds->data[i];
+            write(*fd, encrypt, ((strlen(msg) / 16) + 1) * 16);
+        }
+        free(encrypt);
+    } else {
+        for (i = 0; i < room->user_fds->size;i++) {
+            int *fd = room->user_fds->data[i];
+            write(*fd, msg, strlen(msg));
+        }
+    }
+    free(msg);
+}
+
+void SendLeaveMsg(Room *room, User *user) {    
+    int i;
+    char *msg = MakeString(3, "[", user->name, " is leave the room]\n");
+    if (room->is_secret) {
+        char *encrypt = Encrypt(room->aes, msg);
+
+        for (i = 0; i < room->user_fds->size;i++) {
+            int *fd = room->user_fds->data[i];
+            if (*fd != user->fd) write(*fd, encrypt, ((strlen(msg) / 16) + 1) * 16);
+        }
+        free(encrypt);
+    } else {
+        for (i = 0; i < room->user_fds->size;i++) {
+            int *fd = room->user_fds->data[i];
+            if (*fd != user->fd) write(*fd, msg, strlen(msg));
+            
+        }
+    }
+    free(msg);
+}
+
 int JoinRoom(Server *server, User *user, char *buf) {
     int i;
     char *name;
@@ -145,7 +188,6 @@ int JoinRoom(Server *server, User *user, char *buf) {
     }
     if (!name || !pass) return 1;
 
-    printf("name : %s\npass: %s\n", name, pass);
     room = FindRoomByName(server->rooms, name);
     
     if (!room) {
@@ -169,6 +211,7 @@ int JoinRoom(Server *server, User *user, char *buf) {
     } else {
         printf("Join room\n");
         user->room_number = room->number;
+        SendJoinMsg(room, user);
         if (room->is_secret) {
             if (strlen(pass) != 0) {
                 printf("immediately join private \n");
@@ -203,6 +246,7 @@ int LeaveRoom(Server *server, User *user) {
     printf("user room_number : %ld\n", user->room_number);
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
     printf("Leave Room %s\n", room->name);
+    SendLeaveMsg(room, user);
     for (i = 0; i < room->user_fds->size; i++) {
         int *tmp = room->user_fds->data[i];
         if (*tmp == user->fd) {
@@ -211,6 +255,11 @@ int LeaveRoom(Server *server, User *user) {
             break;
         }
     }
+    char *msg = MakeString(3, "[", user->name, "is leave the room]\n");
+    for (i = 0; i < room->user_fds->size; i++) {
+        write(room->user_fds->data[i], msg, strlen(msg));
+    }
+    free(msg);
     printf("room user_fds size : %ld\n", room->user_fds->size);
     if (room->user_fds->size == 0) {
         printf("Delete Room %s\n", room->name);

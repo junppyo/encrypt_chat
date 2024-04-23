@@ -1,3 +1,4 @@
+#include "../../incs/utils.h"
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -86,9 +87,10 @@ int SendMsg(int fd, char *buf) {
         write(fd, buf, strlen(buf));
         return 0;
     }
-    int len = strlen(buf);
+    char *msg = MakeString(4, "[", user.name, "] : ", buf);
+    int len = strlen(msg);
     if (user.status == PRIVATE) {
-        uint8_t *encrypt = Encrypt(user.room_aes, buf);
+        uint8_t *encrypt = Encrypt(user.room_aes, msg);
         
         if (len % 16 == 0) {
             n = write(fd, encrypt, len);
@@ -99,8 +101,10 @@ int SendMsg(int fd, char *buf) {
         free(encrypt);
         encrypt = NULL;
     } else {
-        n = write(fd, buf, strlen(buf));
+        n = write(fd, msg, len);
     }
+    free(msg);
+    msg = NULL;
 }
 
 int Send(void *sock) {
@@ -109,6 +113,10 @@ int Send(void *sock) {
     char buf[BUF_SIZE];
     while (1) {
         scanf("%s", buf);
+        if (strlen(user.name) == 0) {
+            strcpy(user.name, buf);
+            printf("client name : %s\n", user.name);
+        }
         if (user.status == PRIVATE || user.status == PUBLIC) {
             SendMsg(*sock_fd, buf);
         } else {
@@ -148,19 +156,11 @@ int main(int argc, char *argv[]) {
         perror(strerror(errno));
         return -1;
     }
-    // if (pthread_mutex_init(mutex, NULL) < 0) {
-    //     printf("create mutex error\n");
-    // }
-    // pthread_create(&thread1, NULL, Receive, &sock);
-    // pthread_create(&thread2, NULL, Send, &sock);
     pthread_create(&thread1, NULL, (void*)Receive, &sock);
     pthread_create(&thread2, NULL, (void*)Send, &sock);
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
-    // while (1) {
-
-    // }
     pthread_detach(thread1);
     pthread_detach(thread2);
     

@@ -11,6 +11,7 @@ enum Flags {
     WAIT_PASS,
     WAIT_REGIST,
     LOGIN,
+    // LOGOUT,
     TRY_PRIVATE,
     PRIVATE,
     PUBLIC,

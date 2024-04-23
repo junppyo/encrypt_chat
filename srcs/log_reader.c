@@ -10,9 +10,6 @@ int main(int argc, char *argv[]) {
 
     conn = mysql_init(NULL);
 
-    for (int i = 0 ; i < argc; i++) {
-        printf("%d : %s\n", i, argv[1]);
-    }
     mysql_real_connect(conn, DB_HOST, DB_USER, DB_PASS, DB_NAME, 0, NULL, 0);
 
     mysql_query(conn, "USE chat");
@@ -34,6 +31,11 @@ int main(int argc, char *argv[]) {
 
         res = mysql_store_result(conn);
         row = mysql_fetch_row(res);
+        if (!row) {
+            printf("not found\n");
+            free(query);
+            return 1;
+        }
         Aes *aes = AesInit(ToString(row[0]));
         char *tmp;
         while (fgets(buf, sizeof(buf), read_fd)) {

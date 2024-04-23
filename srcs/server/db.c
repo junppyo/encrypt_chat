@@ -21,8 +21,7 @@ char *DbGetUser(MYSQL* conn, char *buf) {
     MYSQL_ROW row;
     char *query = MakeString(3, "SELECT PW FROM user WHERE ID='", buf, "'");
     if (mysql_query(conn, query)) {
-        printf("query : %s\n", query);
-        printf("query fail\n");
+        printf("query fail : %s\n", query);
         free(query);
         return NULL;
     }
@@ -41,14 +40,12 @@ char *DbGetUser(MYSQL* conn, char *buf) {
 }
 
 int DbCreateUser(MYSQL* conn, char *user, char *pass) {
-    // char query[128];
     MYSQL_RES *res;
     MYSQL_ROW row;
     char *query = MakeString(5, "INSERT INTO user(ID, PW) VALUES ('", user, "', '", pass, "')");
 
     if (mysql_query(conn, query)) {
         printf("query fail : %s\n", query);
-        printf("query fail\n");
         free(query);
         return 1;
     }
