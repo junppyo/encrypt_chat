@@ -7,8 +7,6 @@ On root directory
 
 ## Execute
 
-Need the root privilage.
-
 ### Server
 ```sudo ./server (PORT)```
 
