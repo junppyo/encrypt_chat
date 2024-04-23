@@ -1,4 +1,4 @@
- #include "../incs/chat.h"
+#include "../incs/chat.h"
 
 void SendMsg(Server *server, User *user) {
     int i;
@@ -9,7 +9,7 @@ void SendMsg(Server *server, User *user) {
         send(user->fd, s, strlen(s), 0);
         return ;
     }
-    if (!strcmp(user->buf, "exit")) {
+    if (!strcmp(user->buf, "!exit")) {
         LeaveRoom(server, user);
         write(user->fd, "Leave\n", 6);
         PrintRoomList(server->rooms, user);

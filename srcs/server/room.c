@@ -8,7 +8,7 @@ char *GetTime() {
     timer = time(NULL);
     t = localtime(&timer);
 
-    sprintf(ret, "%02d-%02d-%02d %02d:%02d:%02d ", t->tm_year - 100, t->tm_mon + 1,
+    sprintf(ret, "%02d-%02d-%02d_%02d:%02d:%02d_", t->tm_year - 100, t->tm_mon + 1,
                                                    t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
     return ret;
 }
@@ -39,7 +39,6 @@ Room *InitRoom(Server *server, char *roomname, char *password) {
     
     char *gettime = GetTime();
     sprintf(filename, "%s%s.log", gettime, roomname);
-    printf("filename : %s\n", filename);
     mode_t mode = S_IRUSR | S_IWUSR | S_IRWXG | S_IRWXO;
     room->log_fd = open(filename, O_CREAT | O_WRONLY, mode);
     room->number = server->rooms->size + 1;
@@ -61,6 +60,7 @@ void PrintRoomList(Array *rooms, User *user) {
     int i, fd;
 
     fd = user->fd;
+
     for (i = 0; i < rooms->size; i++) {
         Room *room = rooms->data[i];
         if (room->is_secret) {
@@ -74,7 +74,7 @@ void PrintRoomList(Array *rooms, User *user) {
         write(fd, " ", 1);
     }
     write(fd, "\n", 1);
-    char *msg = "Please input the room name : ";
+    char *msg = "Room with * before of room name is private room.\nIf you want make private room, type the (room name)/(password)\nPlease input the room name : ";
     write(fd, msg, strlen(msg));
 }
 
@@ -127,7 +127,7 @@ Room *MakeRoom(Server *server, char *buf) {
 
 void SendJoinMsg(Room *room, User *user) {    
     int i;
-    char *msg = MakeString(3, "[", user->name, " is join the room]\n");
+    char *msg = MakeString(3, "[", user->name, " is join the room]");
     if (room->is_secret) {
         char *encrypt = Encrypt(room->aes, msg);
         
@@ -147,7 +147,7 @@ void SendJoinMsg(Room *room, User *user) {
 
 void SendLeaveMsg(Room *room, User *user) {    
     int i;
-    char *msg = MakeString(3, "[", user->name, " is leave the room]\n");
+    char *msg = MakeString(3, "[", user->name, " is leave the room]");
     if (room->is_secret) {
         char *encrypt = Encrypt(room->aes, msg);
 
@@ -176,10 +176,10 @@ int JoinRoom(Server *server, User *user, char *buf) {
     for (i = 0; i < strlen(buf); i++) {
         if (buf[i] == '/') break;
     }
-    if (i == strlen(buf)) {
-        if (i > 16) {
-            return 1;
-        }
+    if (i > 16) {
+       return 1;
+    }
+    else if (i == strlen(buf)) {    
         name = substr(buf, 0, i);
         pass = substr(buf, i, strlen(buf));
     } else {
@@ -255,11 +255,6 @@ int LeaveRoom(Server *server, User *user) {
             break;
         }
     }
-    char *msg = MakeString(3, "[", user->name, "is leave the room]\n");
-    for (i = 0; i < room->user_fds->size; i++) {
-        write(room->user_fds->data[i], msg, strlen(msg));
-    }
-    free(msg);
     printf("room user_fds size : %ld\n", room->user_fds->size);
     if (room->user_fds->size == 0) {
         printf("Delete Room %s\n", room->name);
@@ -293,9 +288,6 @@ void RequestRoomPass(Room *room, User *user) {
 int TryPrivateRoom(Server *server, User *user) {
     printf("try private room\n");
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
-    // char *tmp = ToString(room->password);
-    // char *pass = Decrypt(server->aes, tmp, 16);
-    // printf("room pass : %s\n", pass);
     int *fds;
 
     if (!strcmp(user->buf, room->password)) {

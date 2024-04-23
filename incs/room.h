@@ -16,7 +16,6 @@ typedef struct room {
     Aes *aes;
     Array *user_fds;
     int log_fd;
-    // int user_fds[16];
 } Room;
 
 Room *InitRoom(Server *server, char *roomname, char *password);

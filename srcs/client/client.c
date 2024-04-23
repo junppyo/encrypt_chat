@@ -25,6 +25,7 @@ typedef struct client {
     Aes *room_aes;
 } Client;
 
+bool Run = true;
 uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
 char name[16];
 bool private = false;
@@ -44,8 +45,13 @@ int Receive(void *sock) {
     memset(buf, 0, BUF_SIZE);
     int err = 0;
 
-    while (!err) {
+    while (Run) {
         n = read(*sock_fd, buf, BUF_SIZE);
+        if (n == 0 || n == -1) {
+            Run = false;
+            printf("\nServer closed\n");
+            break;
+        }
         if (user.status == LOGOUT) {
             write(1, buf, n);
             if (!strncmp(buf, "Welcome", 7)) {
@@ -72,7 +78,6 @@ int Receive(void *sock) {
                 }
             }
         } else {
-            printf("status: login\n");
             PrintBuf(buf, n);
         }
         memset(buf, 0, n);
@@ -83,8 +88,11 @@ int Receive(void *sock) {
 
 int SendMsg(int fd, char *buf) {
     int n;
-    if (!strcmp("exit", buf)) {
+    if (!strcmp("!exit", buf)) {
         write(fd, buf, strlen(buf));
+        return 0;
+    } else if (!strcmp("!help", buf)) {
+        printf("If you want to leave the room, type the !exit\n");
         return 0;
     }
     char *msg = MakeString(4, "[", user.name, "] : ", buf);
@@ -111,7 +119,7 @@ int Send(void *sock) {
     int n;
     int *sock_fd = (int *)sock;
     char buf[BUF_SIZE];
-    while (1) {
+    while (Run) {
         scanf("%s", buf);
         if (strlen(user.name) == 0) {
             strcpy(user.name, buf);
@@ -159,7 +167,8 @@ int main(int argc, char *argv[]) {
     pthread_create(&thread1, NULL, (void*)Receive, &sock);
     pthread_create(&thread2, NULL, (void*)Send, &sock);
     pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
+    // pthread_join(thread2, NULL);
+    pthread_cancel(thread2);
 
     pthread_detach(thread1);
     pthread_detach(thread2);

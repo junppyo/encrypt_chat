@@ -15,6 +15,8 @@ Server *InitServer(int port) {
     server->server_addr.sin_addr.s_addr = inet_addr(ADDRESS);
     server->server_addr.sin_port = htons(port);
     server->sock = socket(AF_INET, SOCK_STREAM, 0);
+    int optval = 1;
+    setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     server->aes = AesInit(KEY);
     server->status = 0;
     server->room_count = 0;
@@ -195,9 +197,7 @@ int ReadFlag(Server *server, struct kevent *event) {
         }
         int *fd = NewElement(server->read_fds);
         *fd = event->ident;
-        // InsertArray(server->read_fds, (void*)&event->ident);
-        memset(buf, 0, strlen(buf));
-        
+        memset(buf, 0, strlen(buf));        
     }
     return 1;
 }

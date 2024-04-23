@@ -16,7 +16,6 @@ MYSQL* DbInit() {
 }
 
 char *DbGetUser(MYSQL* conn, char *buf) {
-    // char query[128];
     MYSQL_RES *res;
     MYSQL_ROW row;
     char *query = MakeString(3, "SELECT PW FROM user WHERE ID='", buf, "'");
