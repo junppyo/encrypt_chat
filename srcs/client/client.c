@@ -90,7 +90,7 @@ int Receive(void *sock) {
 }
 
 int SendMsg(int fd, unsigned char *buf) {
-    int n;
+    int n, len;
     unsigned char *msg, *encrypt;
 
     if (!strcmp("!exit", buf)) {
@@ -101,7 +101,7 @@ int SendMsg(int fd, unsigned char *buf) {
         return 0;
     }
     msg = MakeString(4, "[", user.name, "] : ", buf);
-    int len = strlen(msg);
+    len = strlen(msg);
     if (user.status == PRIVATE) {
         encrypt = Encrypt(user.room_aes, msg);
         

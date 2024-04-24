@@ -1,8 +1,6 @@
 #pragma once
 #include "common.h"
 
-#define BUF_SIZE 512
-
 typedef struct server Server;
 typedef struct array Array;
 

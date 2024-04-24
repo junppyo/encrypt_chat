@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
-// #include "common.h"
 
 typedef struct node {
     void *data;
@@ -25,7 +24,6 @@ typedef struct array {
     size_t capacity;
 } Array;
 
-// void Clear(Array *array);
 Array* InitArray(size_t data_size);
 void *NewElement(Array *arr);
 void *InsertArray(Array *arr, void *data);
@@ -37,5 +35,6 @@ void FreeArray(Array *arr);
 unsigned char *ToHex(uint8_t *buf);
 unsigned char *ToString(unsigned char *buf);
 
+unsigned char *Strcat(unsigned char *s1, unsigned char *s2);
 unsigned char* substr(const unsigned char *src, int m, int n);
 unsigned char* MakeString(int args, ...);

@@ -19,13 +19,12 @@ typedef struct room {
 } Room;
 
 Room *InitRoom(Server *server, unsigned char *roomname, unsigned char *password);
-void PrintRoomList(Array *rooms, User *user);
 Room *FindRoomByName(Array *rooms, unsigned char *name);
 Room *FindRoomByNumber(Array *rooms, int n);
-int JoinRoom(Server *server, User *user, unsigned char *name);
 Room *MakeRoom(Server *server, unsigned char *buf);
+int JoinRoom(Server *server, User *user, unsigned char *name);
 int LeaveRoom(Server *server, User *user);
 void RequestRoomPass(Room *room, User *user);
 int TryPrivateRoom(Server *server, User *user);
 void FreeRooms(Array *rooms);
-unsigned char *Strcat(unsigned char *s1, unsigned char *s2);
+void PrintRoomList(Array *rooms, User *user);
