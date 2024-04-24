@@ -1,7 +1,6 @@
 #include "../incs/user.h"
 
 User *NewUser(int fd) {
-    printf("new user : %d\n", fd);
     struct linger _linger;
     User *user = (User *)malloc(sizeof(User));
     unsigned char *buf = (unsigned char *)malloc(sizeof(unsigned char) * BUF_SIZE);
@@ -22,9 +21,10 @@ User *NewUser(int fd) {
 
 User *UserByFd(Array *users, int fd) {
     int i;
+    User *user;
 
     for (i = 0; i < users->size; i++) {
-        User *user = users->data[i];
+        user = users->data[i];
         if (user->fd == fd) return user;
     }
 
@@ -34,8 +34,10 @@ User *UserByFd(Array *users, int fd) {
 
 void DeleteUserByFd(Array *users, int fd) {
     int i;
+    User *user;
+
     for (i = 0; i < users->size; i++) {
-        User *user = users->data[i];
+        user = users->data[i];
         if (user->fd == fd) {
             free(user->buf);
             EraseArray(users, i);
@@ -59,9 +61,10 @@ int DisconnectUser(Server *server, int fd) {
 
 void FreeUsers(Array *users) {
     int i;
-
+    User *user;
+    
     for (i = 0; i < users->size; i++) {
-        User *user = users->data[i];
+        user = users->data[i];
         free(user->buf);
     }
     FreeArray(users);

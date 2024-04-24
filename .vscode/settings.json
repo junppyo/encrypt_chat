@@ -6,6 +6,13 @@
         "system_error": "c",
         "string": "c",
         "string_view": "c",
-        "log_reader.h": "c"
+        "log_reader.h": "c",
+        "*.tcc": "c",
+        "exception": "c",
+        "memory_resource": "c",
+        "iosfwd": "c",
+        "new": "c",
+        "ostream": "c",
+        "streambuf": "c"
     }
 }

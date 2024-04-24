@@ -10,12 +10,12 @@ void print_event(struct kevent* event) {
 
 Server *InitServer(int port) {
     Server *server = (Server *)malloc(sizeof(Server));
+    int optval = 1;
 
     server->server_addr.sin_family = AF_INET;
     server->server_addr.sin_addr.s_addr = inet_addr(ADDRESS);
     server->server_addr.sin_port = htons(port);
     server->sock = socket(AF_INET, SOCK_STREAM, 0);
-    int optval = 1;
     setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     server->aes = AesInit(KEY);
     server->status = 0;
@@ -60,12 +60,11 @@ void AddEvents(Server *server, int sock, int16_t filter, uint16_t flags, uint32_
     EV_SET(&event, sock, filter, flags, fflags, data, udata);
     struct kevent *tmp = NewElement(server->changed);
     memcpy(tmp, &event, sizeof(struct kevent));
-    // InsertArray(server->changed, (void *)&event);
 }
 
 void Run(Server *server) {
+    static struct timespec ts;
     while (!Stop) {
-        static struct timespec ts;
         ts.tv_sec = 10;
         ts.tv_nsec = 0;
         int new_event = kevent(server->kqueue_fd, (struct kevent *)server->changed->data[0], server->changed->size, server->event_list, 10, &ts);
@@ -91,6 +90,7 @@ void CloseServer(Server *server) {
 void CheckEvent(Server* server, int new_event) {
     struct kevent* current;
     int i;
+
     for (i = 0; i < new_event; i++) {
         current = &server->event_list[i];
         print_event(current);
@@ -113,7 +113,6 @@ void CheckEvent(Server* server, int new_event) {
             printf("write flag\n");
             WriteFlag(server, current);
         }
-        
     }
 }
 
@@ -130,7 +129,10 @@ int ErrorFlag(Server* server, struct kevent *event) {
 
 
 int ReadFlag(Server *server, struct kevent *event) {
-    int client_sock;
+    int client_sock, len, *fd;
+    uint8_t *buf;
+    User *user;
+    unsigned char *msg;
 
     if ((int)event->ident == server->sock) {
         printf("connect client\n");
@@ -140,12 +142,11 @@ int ReadFlag(Server *server, struct kevent *event) {
             return -1;
         }
     } else {
-        User *user = UserByFd(server->users, event->ident);
-        uint8_t *buf = user->buf;
-        int len = read(user->fd, buf, BUF_SIZE);
+        user = UserByFd(server->users, event->ident);
+        buf = user->buf;
+        len = read(user->fd, buf, BUF_SIZE);
         printf("\t\trecv : %d bytes\n", len);
         user->buf_len = len;
-        // int len = recv(user->fd, buf + strlen(buf), BUF_SIZE, 0);
 
         if (len < 0) {
             printf("receive error\n");
@@ -177,7 +178,7 @@ int ReadFlag(Server *server, struct kevent *event) {
                 break;
             case LOGIN:
                 if (JoinRoom(server, user, user->buf)) {
-                    unsigned char *msg = "Create or Join Failed\n";
+                    msg = "Create or Join Failed\n";
                     printf("%s", msg);
                     write(user->fd, msg, strlen(msg));
                     PrintRoomList(server->rooms, user);
@@ -196,7 +197,7 @@ int ReadFlag(Server *server, struct kevent *event) {
                 SendMsg(server, user);
                 break;
         }
-        int *fd = NewElement(server->read_fds);
+        fd = NewElement(server->read_fds);
         *fd = event->ident;
         memset(buf, 0, strlen(buf));        
     }
@@ -223,7 +224,7 @@ int WriteFlag(Server *server, struct kevent *event) {
 
 int ConnectClient(Server *server) {
     int client_sock;
-    unsigned char buf[BUF_SIZE] = {0, };
+    unsigned char *msg, buf[BUF_SIZE] = {0, };
 
     if ((client_sock = accept(server->sock, NULL, NULL)) == -1) {
         printf("accept error\n");
@@ -231,9 +232,8 @@ int ConnectClient(Server *server) {
     }
     fcntl(client_sock, F_SETFL, O_NONBLOCK);
     AddEvents(server, client_sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    unsigned char *msg = "Please enter your ID : ";
+    msg = "Please enter your ID : ";
     write(client_sock, msg, strlen(msg));
-    // send(client_sock, msg, strlen(msg), 0);
     InsertArray(server->users, NewUser(client_sock));
 
     return client_sock;

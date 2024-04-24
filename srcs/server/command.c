@@ -1,11 +1,12 @@
 #include "../../incs/command.h"
 
 void SetId(Server *server, User *user, unsigned char *buf) {
+    unsigned char *msg, *pass;
+
     printf("SetId : %s\n", buf);
     strcpy(user->name, buf);
     printf("username : %s\n", user->name);
-    unsigned char *msg;
-    unsigned char *pass = DbGetUser(server->db, buf);
+    pass = DbGetUser(server->db, buf);
     if (pass) {
         // Login
         printf("found user\n");
@@ -34,6 +35,7 @@ int CreateUser(Server *server, User *user, unsigned char *buf) {
     uint8_t *pw = Encrypt(server->aes, (uint8_t *)buf);
     unsigned char *pw_hex = ToHex(pw);
     int ret = DbCreateUser(server->db, user->name, pw_hex);
+
     free(pw);
     free(pw_hex);
     Login(server, user);
@@ -47,6 +49,7 @@ bool TryLogin(Server *server, User *user, unsigned char *buf) {
     unsigned char *decrypt_db = Decrypt(server->aes, pw_str, LOGIN_WORD_LIMIT);
     bool ret = false;
     unsigned char msg[32];
+    
     if (!strcmp(buf, decrypt_db)) {
         Login(server, user);
         ret = true;
@@ -55,12 +58,9 @@ bool TryLogin(Server *server, User *user, unsigned char *buf) {
         sprintf(msg, "Login Failed: Wrong password\n");
         write(user->fd, msg, strlen(msg));
     }
+    
     free(saved_pw);
     free(pw_str);
     free(decrypt_db);
     return ret;
-}
-
-int Lobby(Server *server, User *user, unsigned char *buf) {
-
 }

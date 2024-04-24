@@ -24,12 +24,13 @@ static uint8_t Multiply(uint8_t x, uint8_t y)
 Aes *AesInit(uint8_t *key) {
     int i;
     Aes *aes = malloc(sizeof(Aes));
-
+    uint16_t tmp;
+    
     memcpy(aes->iv, Iv, 16);
     aes->rcon[0] = 0x8d;
     memcpy(aes->key, key, 4 * NK);
     for (i = 1; i <= NR; i++) {
-        uint16_t tmp = aes->rcon[i - 1];
+        tmp = aes->rcon[i - 1];
         if (tmp >= 0x80) aes->rcon[i] = tmp * 2 ^ 0x11B;
         else aes->rcon[i] = tmp * 2;
     }
@@ -40,9 +41,11 @@ Aes *AesInit(uint8_t *key) {
 
 
 void print_state(uint8_t (*state)[4]) {
+    int j, k;
+
     printf("state\n");
-    for (int j = 0; j < 4; j++) {
-        for (int k = 0; k < 4; k++) {
+    for (j = 0; j < 4; j++) {
+        for (k = 0; k < 4; k++) {
             printf("%02X  ", state[j][k]);
         }
     }
@@ -51,6 +54,7 @@ void print_state(uint8_t (*state)[4]) {
 
 void KeyExpansion(Aes *aes) {
     int i, j;
+    uint8_t tmpa[4], swp;
 
     for (i = 0; i < NK; i++) {
         // Split Key
@@ -61,13 +65,12 @@ void KeyExpansion(Aes *aes) {
     }
 
     for (i = NK; i < _ROUND_LEN; i++) {
-        uint8_t tmpa[4];
         for (j = 0; j < 4; j++) {
             tmpa[j] = aes->round_keys[i - 1][j];
         }
         // RotWord
         if (i % NK == 0) {
-            uint8_t swp = tmpa[0];
+            swp = tmpa[0];
             for (j = 0; j < NB - 1; j++) {
                 tmpa[j] = tmpa[j + 1];
             }
@@ -238,11 +241,11 @@ void XorIV(uint8_t *buf, uint8_t *iv) {
 }
 
 
-char *Encrypt(Aes *aes, char *buf) {
+unsigned char *Encrypt(Aes *aes, unsigned char *buf) {
     int len = strlen(buf);
     int size = len % 16 == 0 ? len : ((len / 16) + 1) * 16;
-    char *cipher = malloc(sizeof(char) * size + 1);
-    char *ret = cipher;
+    unsigned char *cipher = malloc(sizeof(unsigned char) * size + 1);
+    unsigned char *ret = cipher;
     int i;
     memcpy(aes->iv, Iv, 16);
     memcpy(cipher, buf, len);
@@ -259,12 +262,12 @@ char *Encrypt(Aes *aes, char *buf) {
     return ret;
 }
 
-char *Decrypt(Aes *aes, char *buf, int size) {
+unsigned char *Decrypt(Aes *aes, unsigned char *buf, int size) {
     int i;
     uint8_t next_iv[_BLOCK_LEN];
-    char *buf_ptr = buf;
-    char *plain = malloc(sizeof(char) * size + 1);
-    char *ret = plain;
+    unsigned char *buf_ptr = buf;
+    unsigned char *plain = malloc(sizeof(unsigned char) * size + 1);
+    unsigned char *ret = plain;
 
     memcpy(aes->iv, Iv, 16);
     for (i = 0; i < size; i += _BLOCK_LEN) {

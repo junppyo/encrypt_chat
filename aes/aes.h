@@ -52,8 +52,8 @@ void InvMixColumns(uint8_t (*state)[4]);
 void Cipher(uint8_t (*state)[4], uint8_t (*round_keys)[4]);
 void InvCipher(uint8_t (*state)[4], uint8_t (*round_keys)[4]);
 void XorIV(uint8_t *buf, uint8_t *iv);
-char *Encrypt(Aes *aes, char *buf);
-char *Decrypt(Aes *aes, char *buf, int size);
+unsigned char *Encrypt(Aes *aes, unsigned char *buf);
+unsigned char *Decrypt(Aes *aes, unsigned char *buf, int size);
 
 
 static const uint8_t sbox[256] = {

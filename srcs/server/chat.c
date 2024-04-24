@@ -1,11 +1,13 @@
 #include "../incs/chat.h"
 
 void SendMsg(Server *server, User *user) {
-    int i;
+    int i, n, *fd;
+    unsigned char *s;
+    Room *room;
 
     if (user->room_number < 0) {
         printf("user %d is not join the room\n", user->fd);
-        unsigned char *s = "You don't join the room yet\n";
+        s = "You don't join the room yet\n";
         send(user->fd, s, strlen(s), 0);
         return ;
     }
@@ -15,14 +17,12 @@ void SendMsg(Server *server, User *user) {
         PrintRoomList(server->rooms, user);
         return ;
     }
-    Room *room = FindRoomByNumber(server->rooms, user->room_number);
-    int n;
+    room = FindRoomByNumber(server->rooms, user->room_number);
     write(room->log_fd, &user->buf_len, sizeof(unsigned char));
     n = write(room->log_fd, user->buf, user->buf_len);
-    // write(room->log_fd, "\n", 1);
-    printf("room user num : %ld\n", room->user_fds->size);
+    
     for (i = 0; i < room->user_fds->size; i++) {
-        int *fd = room->user_fds->data[i];
+        fd = room->user_fds->data[i];
         printf("%d  send user fd : %d       room user fd : %d\n", i, user->fd, *fd);
         if (*fd == user->fd) continue;
         write(*fd, user->buf, user->buf_len);

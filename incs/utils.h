@@ -34,8 +34,8 @@ void ClearArray(Array *arr);
 void FreeArray(Array *arr);
 
 
-char *ToHex(uint8_t *buf);
-char *ToString(char *buf);
+unsigned char *ToHex(uint8_t *buf);
+unsigned char *ToString(unsigned char *buf);
 
-char* substr(const char *src, int m, int n);
-char* MakeString(int args, ...);
+unsigned char* substr(const unsigned char *src, int m, int n);
+unsigned char* MakeString(int args, ...);

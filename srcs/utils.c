@@ -25,7 +25,6 @@ void *NewElement(Array *arr) {
     }
     arr->data[arr->size] = malloc(arr->data_size);
     if (arr->data[arr->size] == NULL) return NULL;
-    // memcpy(arr->data[arr->size], data, arr->data_size);
     arr->size++;
     
     return arr->data[arr->size - 1];
@@ -37,9 +36,6 @@ void *InsertArray(Array *arr, void *data) {
         if (arr->data == NULL) return NULL;
     }
     arr->data[arr->size] = data;
-    // arr->data[arr->size] = malloc(arr->data_size);
-    // if (arr->data[arr->size] == NULL) return NULL;
-    // memcpy(arr->data[arr->size], data, arr->data_size);
     arr->size++;
     
     return arr->data[arr->size - 1];
@@ -79,26 +75,29 @@ void FreeArray(Array *arr) {
 
 
 unsigned char *ToHex(uint8_t *buf) {
-    if (!buf || strlen(buf) == 0) return NULL;
-    printf("ToHex : %s\n", buf);
-    unsigned char *hex = malloc(sizeof(unsigned char) * (strlen(buf) * 2 + 1));
-    if (!hex) return NULL;
-    unsigned char *ret = hex;
+    unsigned char *hex, *ret;
     int i;
+
+    if (!buf || strlen(buf) == 0) return NULL;
+    hex = malloc(sizeof(unsigned char) * (strlen(buf) * 2 + 1));
+    if (!hex) return NULL;
+    ret = hex;
 
     for (i = 0; i < strlen(buf); i++) {
         sprintf(hex, "%02X", buf[i]);
         hex += 2;
     }
     *hex = '\0';
+    
     return ret;
 }
 
 unsigned char *ToString(unsigned char *buf) {
-    uint8_t *str = malloc(sizeof(unsigned char) * strlen(buf) / 2 + 1);
-    if (!str) return NULL;
     int i;
+    uint8_t *str = malloc(sizeof(unsigned char) * strlen(buf) / 2 + 1);
     uint8_t tmp = 0;
+
+    if (!str) return NULL;
 
     for (i = 0; i < strlen(buf) / 2; i++) {
         if (buf[i * 2] >= '0' && buf[i * 2] <= '9') {
@@ -153,7 +152,7 @@ unsigned char *Strcat(unsigned char *s1, unsigned char *s2) {
 
 unsigned char *MakeString(int args, ...) {
     va_list ap;
-    unsigned char *ret;
+    unsigned char *ret, *tmp;
     int i, j;
     int len = 0;
     int p = 0;
@@ -170,7 +169,7 @@ unsigned char *MakeString(int args, ...) {
     va_start(ap, args);
 
     for (i = 0; i < args; i++) {
-        unsigned char *tmp = va_arg(ap, unsigned char *);
+        tmp = va_arg(ap, unsigned char *);
         for (j = 0; j < strlen(tmp); j++) {
             ret[p + j] = tmp[j];
         }

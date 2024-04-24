@@ -6,7 +6,7 @@
 #define DB_PASS "junpyo"
 #define DB_NAME "chat"
 
-char *DbGetUser(MYSQL* conn, char *buf);
-int DbCreateUser(MYSQL* conn, char *user, char *pass);
+unsigned char *DbGetUser(MYSQL* conn, unsigned char *buf);
+int DbCreateUser(MYSQL* conn, unsigned char *user, unsigned char *pass);
 MYSQL* DbInit();
-int DbCreateLog(MYSQL *conn, char *name, char *pass);
+int DbCreateLog(MYSQL *conn, unsigned char *name, unsigned char *pass);

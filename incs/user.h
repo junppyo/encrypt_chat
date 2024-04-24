@@ -18,10 +18,10 @@ enum Flags {
 
 typedef struct user {
     int fd;
-    char name[16];
+    unsigned char name[16];
     size_t room_number;
-    char *buf;
-    int buf_len;
+    unsigned char *buf;
+    unsigned char buf_len;
     uint8_t status;
 } User;
 
@@ -29,4 +29,4 @@ User *NewUser(int fd);
 User *UserByFd(Array *users, int fd);
 void DeleteUserByFd(Array *users, int fd);
 int DisconnectUser(Server *server, int fd);
-void ClearUsers(Array *users);
+void FreeUsers(Array *users);

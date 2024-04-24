@@ -39,15 +39,16 @@ void PrintBuf(unsigned char *buf, int len) {
 }
 
 int Receive(void *sock) {
-    int n;
+    int n, err = 0;
     int *sock_fd = (int *)sock;
     uint8_t buf[BUF_SIZE];
+    unsigned char *decrypt;
+    socklen_t len;
+
     memset(buf, 0, BUF_SIZE);
-    int err = 0;
 
     while (Run) {
         n = read(*sock_fd, buf, BUF_SIZE);
-        // printf("recv : %d\n", n);
         if (n == 0 || n == -1) {
             Run = false;
             printf("\nServer closed\n");
@@ -72,7 +73,7 @@ int Receive(void *sock) {
                 PrintBuf(buf, strlen(buf));
             } else {
                 if (user.status == PRIVATE) {
-                    unsigned char *decrypt = Decrypt(user.room_aes, buf, n);
+                    decrypt = Decrypt(user.room_aes, buf, n);
                     PrintBuf(decrypt, strlen(decrypt));
                     free(decrypt);
                 } else {
@@ -83,13 +84,15 @@ int Receive(void *sock) {
             PrintBuf(buf, n);
         }
         memset(buf, 0, n);
-        socklen_t len = sizeof(err);
+        len = sizeof(err);
         err = getsockopt(*sock_fd, SOL_SOCKET, SO_ERROR, &err, &len);
     }
 }
 
 int SendMsg(int fd, unsigned char *buf) {
     int n;
+    unsigned char *msg, *encrypt;
+
     if (!strcmp("!exit", buf)) {
         write(fd, buf, strlen(buf));
         return 0;
@@ -97,10 +100,10 @@ int SendMsg(int fd, unsigned char *buf) {
         printf("If you want to leave the room, type the !exit\n");
         return 0;
     }
-    unsigned char *msg = MakeString(4, "[", user.name, "] : ", buf);
+    msg = MakeString(4, "[", user.name, "] : ", buf);
     int len = strlen(msg);
     if (user.status == PRIVATE) {
-        uint8_t *encrypt = Encrypt(user.room_aes, msg);
+        encrypt = Encrypt(user.room_aes, msg);
         
         if (len % 16 == 0) {
             n = write(fd, encrypt, len);
@@ -121,6 +124,7 @@ int Send(void *sock) {
     int n;
     int *sock_fd = (int *)sock;
     unsigned char buf[BUF_SIZE];
+
     while (Run) {
         scanf("%s", buf);
         if (strlen(user.name) == 0) {
@@ -138,15 +142,16 @@ int Send(void *sock) {
 
 
 int main(int argc, unsigned char *argv[]) {
+    int sock, inet, conn;
+    struct sockaddr_in address;
+    uint8_t buf[BUF_SIZE] = {0};
+    pthread_t thread1, thread2;
+    
     if (argc < 3) {
         printf("need address and port number\n");
         printf("./client (ADDRESS) (PORT)\n");
         return -1;
     }
-    int sock, inet, conn;
-    struct sockaddr_in address;
-    uint8_t buf[BUF_SIZE] = {0};
-    pthread_t thread1, thread2;
     user.status = LOGOUT;
     aes = AesInit(KEY);
 
