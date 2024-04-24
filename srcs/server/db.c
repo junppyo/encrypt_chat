@@ -15,10 +15,10 @@ MYSQL* DbInit() {
     return conn;
 }
 
-char *DbGetUser(MYSQL* conn, char *buf) {
+unsigned char *DbGetUser(MYSQL* conn, unsigned char *buf) {
     MYSQL_RES *res;
     MYSQL_ROW row;
-    char *query = MakeString(3, "SELECT PW FROM user WHERE ID='", buf, "'");
+    unsigned char *query = MakeString(3, "SELECT PW FROM user WHERE ID='", buf, "'");
     if (mysql_query(conn, query)) {
         printf("query fail : %s\n", query);
         free(query);
@@ -31,17 +31,17 @@ char *DbGetUser(MYSQL* conn, char *buf) {
         free(query);
         return NULL;
     }
-    char *ret = malloc(sizeof(char) * strlen(row[0]) + 1);
+    unsigned char *ret = malloc(sizeof(unsigned char) * strlen(row[0]) + 1);
     strcpy(ret, row[0]);
     mysql_free_result(res);
     free(query);
     return ret;
 }
 
-int DbCreateUser(MYSQL* conn, char *user, char *pass) {
+int DbCreateUser(MYSQL* conn, unsigned char *user, unsigned char *pass) {
     MYSQL_RES *res;
     MYSQL_ROW row;
-    char *query = MakeString(5, "INSERT INTO user(ID, PW) VALUES ('", user, "', '", pass, "')");
+    unsigned char *query = MakeString(5, "INSERT INTO user(ID, PW) VALUES ('", user, "', '", pass, "')");
 
     if (mysql_query(conn, query)) {
         printf("query fail : %s\n", query);
@@ -52,11 +52,11 @@ int DbCreateUser(MYSQL* conn, char *user, char *pass) {
     return 0;
 }
 
-int DbCreateLog(MYSQL *conn, char *name, char *pass) {
+int DbCreateLog(MYSQL *conn, unsigned char *name, unsigned char *pass) {
     MYSQL_RES *res;
     MYSQL_ROW row;
     if (!pass) pass = "";
-    char *query = MakeString(5, "INSERT INTO log(ID, AES_KEY) VALUES ('", name, "', '", pass, "')");
+    unsigned char *query = MakeString(5, "INSERT INTO log(ID, AES_KEY) VALUES ('", name, "', '", pass, "')");
     if (mysql_query(conn, query)) {
         printf("query fail : %s\n", query);
         free(query);

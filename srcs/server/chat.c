@@ -5,7 +5,7 @@ void SendMsg(Server *server, User *user) {
 
     if (user->room_number < 0) {
         printf("user %d is not join the room\n", user->fd);
-        char *s = "You don't join the room yet\n";
+        unsigned char *s = "You don't join the room yet\n";
         send(user->fd, s, strlen(s), 0);
         return ;
     }
@@ -16,8 +16,10 @@ void SendMsg(Server *server, User *user) {
         return ;
     }
     Room *room = FindRoomByNumber(server->rooms, user->room_number);
-    write(room->log_fd, user->buf, user->buf_len);
-    write(room->log_fd, "\n", 1);
+    int n;
+    write(room->log_fd, &user->buf_len, sizeof(unsigned char));
+    n = write(room->log_fd, user->buf, user->buf_len);
+    // write(room->log_fd, "\n", 1);
     printf("room user num : %ld\n", room->user_fds->size);
     for (i = 0; i < room->user_fds->size; i++) {
         int *fd = room->user_fds->data[i];

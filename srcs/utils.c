@@ -64,8 +64,6 @@ void ClearArray(Array *arr) {
         arr->data[i] = NULL;
     }
     arr->size = 0;
-    // free(arr->data);
-    // free(arr);
 }
 
 void FreeArray(Array *arr) {
@@ -80,12 +78,12 @@ void FreeArray(Array *arr) {
 }
 
 
-char *ToHex(uint8_t *buf) {
+unsigned char *ToHex(uint8_t *buf) {
     if (!buf || strlen(buf) == 0) return NULL;
     printf("ToHex : %s\n", buf);
-    char *hex = malloc(sizeof(char) * (strlen(buf) * 2 + 1));
+    unsigned char *hex = malloc(sizeof(unsigned char) * (strlen(buf) * 2 + 1));
     if (!hex) return NULL;
-    char *ret = hex;
+    unsigned char *ret = hex;
     int i;
 
     for (i = 0; i < strlen(buf); i++) {
@@ -96,8 +94,8 @@ char *ToHex(uint8_t *buf) {
     return ret;
 }
 
-char *ToString(char *buf) {
-    uint8_t *str = malloc(sizeof(char) * strlen(buf) / 2 + 1);
+unsigned char *ToString(unsigned char *buf) {
+    uint8_t *str = malloc(sizeof(unsigned char) * strlen(buf) / 2 + 1);
     if (!str) return NULL;
     int i;
     uint8_t tmp = 0;
@@ -120,12 +118,12 @@ char *ToString(char *buf) {
     return str;
 }
 
-char* substr(const char *src, int m, int n)
+unsigned char* substr(const unsigned char *src, int m, int n)
 {
     int i;
     int len = n - m;
  
-    char *dest = (char*)malloc(sizeof(char) * (len + 1));
+    unsigned char *dest = (unsigned char*)malloc(sizeof(unsigned char) * (len + 1));
     if (!dest) return NULL;
     for (i = m; i < n && (*(src + i) != '\0'); i++)
     {
@@ -137,8 +135,8 @@ char* substr(const char *src, int m, int n)
     return dest - len;
 }
 
-char *Strcat(char *s1, char *s2) {
-    char *ret = malloc(sizeof(char) * (strlen(s1) + strlen(s2) + 1));
+unsigned char *Strcat(unsigned char *s1, unsigned char *s2) {
+    unsigned char *ret = malloc(sizeof(unsigned char) * (strlen(s1) + strlen(s2) + 1));
     int i;
 
     for (i = 0; i < strlen(s1); i++) {
@@ -153,26 +151,26 @@ char *Strcat(char *s1, char *s2) {
     return ret;
 }
 
-char *MakeString(int args, ...) {
+unsigned char *MakeString(int args, ...) {
     va_list ap;
-    char *ret;
+    unsigned char *ret;
     int i, j;
     int len = 0;
     int p = 0;
 
     va_start(ap, args);
     for (i = 0; i < args; i++) {
-        len += strlen(va_arg(ap, char*));
+        len += strlen(va_arg(ap, unsigned char*));
     }
     va_end(ap);
 
-    ret = malloc(sizeof(char) * len + 1);
+    ret = malloc(sizeof(unsigned char) * len + 1);
     ret[len] = '\0';
 
     va_start(ap, args);
 
     for (i = 0; i < args; i++) {
-        char *tmp = va_arg(ap, char *);
+        unsigned char *tmp = va_arg(ap, unsigned char *);
         for (j = 0; j < strlen(tmp); j++) {
             ret[p + j] = tmp[j];
         }

@@ -78,8 +78,8 @@ void Run(Server *server) {
 void CloseServer(Server *server) {
     close(server->kqueue_fd);
     FreeArray(server->changed);
-    FreeArray(server->users);
-    FreeArray(server->rooms);
+    FreeUsers(server->users);
+    FreeRooms(server->rooms);
     FreeArray(server->read_fds);
     mysql_close(server->db);
     mysql_library_end();
@@ -143,6 +143,7 @@ int ReadFlag(Server *server, struct kevent *event) {
         User *user = UserByFd(server->users, event->ident);
         uint8_t *buf = user->buf;
         int len = read(user->fd, buf, BUF_SIZE);
+        printf("\t\trecv : %d bytes\n", len);
         user->buf_len = len;
         // int len = recv(user->fd, buf + strlen(buf), BUF_SIZE, 0);
 
@@ -176,7 +177,7 @@ int ReadFlag(Server *server, struct kevent *event) {
                 break;
             case LOGIN:
                 if (JoinRoom(server, user, user->buf)) {
-                    char *msg = "Create or Join Failed\n";
+                    unsigned char *msg = "Create or Join Failed\n";
                     printf("%s", msg);
                     write(user->fd, msg, strlen(msg));
                     PrintRoomList(server->rooms, user);
@@ -222,7 +223,7 @@ int WriteFlag(Server *server, struct kevent *event) {
 
 int ConnectClient(Server *server) {
     int client_sock;
-    char buf[BUF_SIZE] = {0, };
+    unsigned char buf[BUF_SIZE] = {0, };
 
     if ((client_sock = accept(server->sock, NULL, NULL)) == -1) {
         printf("accept error\n");
@@ -230,7 +231,7 @@ int ConnectClient(Server *server) {
     }
     fcntl(client_sock, F_SETFL, O_NONBLOCK);
     AddEvents(server, client_sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-    char *msg = "Please enter your ID : ";
+    unsigned char *msg = "Please enter your ID : ";
     write(client_sock, msg, strlen(msg));
     // send(client_sock, msg, strlen(msg), 0);
     InsertArray(server->users, NewUser(client_sock));
@@ -242,7 +243,7 @@ void ctrlc_handler(int signum) {
     Stop = 1;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, unsigned char *argv[]) {
     if (argc < 2) {
         printf("need port number\n");
         return -1;

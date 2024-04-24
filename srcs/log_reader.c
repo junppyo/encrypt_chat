@@ -1,21 +1,22 @@
 
 #include "../incs/log_reader.h"
 
-int main(int argc, char *argv[]) {
+int main(int argc, unsigned char *argv[]) {
     if (argc < 2) {
         printf("./reader (filename)\n");
         printf("Please input file name\n");
         return 1;
     }
-    FILE* read_fd = fopen(argv[1], "r");
-    if (!read_fd) {
+    int fd = open(argv[1], O_RDONLY);
+
+    if (!fd) {
         printf("Don't exist filename\n");
         return 1;
     }
     MYSQL* conn;
     MYSQL_RES *res;
     MYSQL_ROW row;
-    char buf[512];
+    unsigned char buf[512];
 
     conn = mysql_init(NULL);
 
@@ -28,7 +29,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *query = MakeString(3, "SELECT AES_KEY from log where ID='", argv[1], "'");
+    unsigned char *query = MakeString(3, "SELECT AES_KEY from log where ID='", argv[1], "'");
     printf("query : %s\n", query);
     if (mysql_query(conn, query)) {
         printf("query failed : %s\n", query);
@@ -40,20 +41,42 @@ int main(int argc, char *argv[]) {
         row = mysql_fetch_row(res);
         if (!row) {
             printf("public room chat log\n");
-            while (fgets(buf, sizeof(buf), read_fd)) {
+            unsigned char len;
+            read(fd, &len, 1);
+            while (read(fd, buf, len)) {
                 printf("%s\n", buf);
+                memset(buf, 0, len);
+                read(fd, &len, 1);
+                if (len == 0) {
+                    if (!read(fd, &len, 1))
+                        break;
+                }
             }
         } else {
-            Aes *aes = AesInit(ToString(row[0]));
+            unsigned char *str = ToString(row[0]);
+            unsigned char len;
+            Aes *aes = AesInit(str);
+            free(str);
             printf("private room chat log\n");
-            char *tmp;
-            while (fgets(buf, sizeof(buf), read_fd)) {
-                char *decrypt = Decrypt(aes, buf, strlen(buf) - 1);
+            
+            read(fd, &len, 1);
+            while (read(fd, buf, len)) {
+                unsigned char *decrypt = Decrypt(aes, buf, len);
                 printf("%s\n", decrypt);
+                memset(buf, 0, len);
+                free(decrypt);
+                read(fd, &len, 1);
+                if (len == 0) {
+                    if (!read(fd, &len, 1))
+                        break;
+                }
             }
+            free(aes);
         }
         free(query);
+        mysql_free_result(res);
     }
-
+    mysql_close(conn);
     return 0;
 }
+

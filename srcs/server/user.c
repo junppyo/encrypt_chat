@@ -4,12 +4,12 @@ User *NewUser(int fd) {
     printf("new user : %d\n", fd);
     struct linger _linger;
     User *user = (User *)malloc(sizeof(User));
-    char *buf = (char *)malloc(sizeof(char) * BUF_SIZE);
+    unsigned char *buf = (unsigned char *)malloc(sizeof(unsigned char) * BUF_SIZE);
 
     _linger.l_onoff = 1;
     _linger.l_linger = 0;
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &_linger, sizeof(_linger));    
-    memset(buf, 0, sizeof(char) * BUF_SIZE);
+    memset(buf, 0, sizeof(unsigned char) * BUF_SIZE);
 
     user->room_number = 0;
     user->fd = fd;
@@ -57,12 +57,12 @@ int DisconnectUser(Server *server, int fd) {
     close(fd);
 }
 
-void ClearUsers(Array *users) {
+void FreeUsers(Array *users) {
     int i;
 
     for (i = 0; i < users->size; i++) {
         User *user = users->data[i];
         free(user->buf);
     }
-    ClearArray(users);
+    FreeArray(users);
 }

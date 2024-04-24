@@ -1,11 +1,11 @@
 #include "../../incs/command.h"
 
-void SetId(Server *server, User *user, char *buf) {
+void SetId(Server *server, User *user, unsigned char *buf) {
     printf("SetId : %s\n", buf);
     strcpy(user->name, buf);
     printf("username : %s\n", user->name);
-    char *msg;
-    char *pass = DbGetUser(server->db, buf);
+    unsigned char *msg;
+    unsigned char *pass = DbGetUser(server->db, buf);
     if (pass) {
         // Login
         printf("found user\n");
@@ -23,16 +23,16 @@ void SetId(Server *server, User *user, char *buf) {
 }
 
 void Login(Server *server, User *user) {
-    char msg[32];
+    unsigned char msg[32];
     
     sprintf(msg, "Welcome %s!\n", user->name);
     write(user->fd, msg, strlen(msg));
     PrintRoomList(server->rooms, user);
 }
 
-int CreateUser(Server *server, User *user, char *buf) {
+int CreateUser(Server *server, User *user, unsigned char *buf) {
     uint8_t *pw = Encrypt(server->aes, (uint8_t *)buf);
-    char *pw_hex = ToHex(pw);
+    unsigned char *pw_hex = ToHex(pw);
     int ret = DbCreateUser(server->db, user->name, pw_hex);
     free(pw);
     free(pw_hex);
@@ -41,12 +41,12 @@ int CreateUser(Server *server, User *user, char *buf) {
     return ret;
 }
 
-bool TryLogin(Server *server, User *user, char *buf) {
-    char *saved_pw = DbGetUser(server->db, user->name);
-    char *pw_str = ToString(saved_pw);
-    char *decrypt_db = Decrypt(server->aes, pw_str, LOGIN_WORD_LIMIT);
+bool TryLogin(Server *server, User *user, unsigned char *buf) {
+    unsigned char *saved_pw = DbGetUser(server->db, user->name);
+    unsigned char *pw_str = ToString(saved_pw);
+    unsigned char *decrypt_db = Decrypt(server->aes, pw_str, LOGIN_WORD_LIMIT);
     bool ret = false;
-    char msg[32];
+    unsigned char msg[32];
     if (!strcmp(buf, decrypt_db)) {
         Login(server, user);
         ret = true;
@@ -61,6 +61,6 @@ bool TryLogin(Server *server, User *user, char *buf) {
     return ret;
 }
 
-int Lobby(Server *server, User *user, char *buf) {
+int Lobby(Server *server, User *user, unsigned char *buf) {
 
 }

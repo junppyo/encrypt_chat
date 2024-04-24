@@ -10,7 +10,7 @@
 #include "../../aes/aes.h"
 
 #define ADDRESS "127.0.0.1"
-#define BUF_SIZE 512
+#define BUF_SIZE 256
 
 enum Flags {
     LOGOUT,
@@ -20,20 +20,20 @@ enum Flags {
 };
 
 typedef struct client {
-    char name[16];
+    unsigned char name[16];
     uint8_t status;
     Aes *room_aes;
 } Client;
 
 bool Run = true;
 uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
-char name[16];
+unsigned char name[16];
 bool private = false;
 Aes *aes;
 
 Client user;
 
-void PrintBuf(char *buf, int len) {
+void PrintBuf(unsigned char *buf, int len) {
     write(1, buf, len);
     write(1, "\n", 1);
 }
@@ -47,6 +47,7 @@ int Receive(void *sock) {
 
     while (Run) {
         n = read(*sock_fd, buf, BUF_SIZE);
+        // printf("recv : %d\n", n);
         if (n == 0 || n == -1) {
             Run = false;
             printf("\nServer closed\n");
@@ -71,8 +72,9 @@ int Receive(void *sock) {
                 PrintBuf(buf, strlen(buf));
             } else {
                 if (user.status == PRIVATE) {
-                    char *decrypt = Decrypt(user.room_aes, buf, n);
+                    unsigned char *decrypt = Decrypt(user.room_aes, buf, n);
                     PrintBuf(decrypt, strlen(decrypt));
+                    free(decrypt);
                 } else {
                     PrintBuf(buf, n);
                 }
@@ -86,7 +88,7 @@ int Receive(void *sock) {
     }
 }
 
-int SendMsg(int fd, char *buf) {
+int SendMsg(int fd, unsigned char *buf) {
     int n;
     if (!strcmp("!exit", buf)) {
         write(fd, buf, strlen(buf));
@@ -95,7 +97,7 @@ int SendMsg(int fd, char *buf) {
         printf("If you want to leave the room, type the !exit\n");
         return 0;
     }
-    char *msg = MakeString(4, "[", user.name, "] : ", buf);
+    unsigned char *msg = MakeString(4, "[", user.name, "] : ", buf);
     int len = strlen(msg);
     if (user.status == PRIVATE) {
         uint8_t *encrypt = Encrypt(user.room_aes, msg);
@@ -118,7 +120,7 @@ int SendMsg(int fd, char *buf) {
 int Send(void *sock) {
     int n;
     int *sock_fd = (int *)sock;
-    char buf[BUF_SIZE];
+    unsigned char buf[BUF_SIZE];
     while (Run) {
         scanf("%s", buf);
         if (strlen(user.name) == 0) {
@@ -135,7 +137,7 @@ int Send(void *sock) {
 }
 
 
-int main(int argc, char *argv[]) {
+int main(int argc, unsigned char *argv[]) {
     if (argc < 3) {
         printf("need address and port number\n");
         printf("./client (ADDRESS) (PORT)\n");
