@@ -8,6 +8,7 @@ void AllocError() {
 Array* InitArray(size_t data_size) {
     Array *arr = (Array *)malloc(sizeof(Array));
     void **data = (void **)malloc(sizeof(void *) * 10);
+    
     if (!arr || !data) return NULL;
     arr->capacity = 10;
     arr->size = 0;
@@ -132,22 +133,6 @@ unsigned char* substr(const unsigned char *src, int m, int n)
     *dest = '\0';
  
     return dest - len;
-}
-
-unsigned char *Strcat(unsigned char *s1, unsigned char *s2) {
-    unsigned char *ret = malloc(sizeof(unsigned char) * (strlen(s1) + strlen(s2) + 1));
-    int i;
-
-    for (i = 0; i < strlen(s1); i++) {
-        ret[i] = s1[i];
-    }
-
-    for (i = 0; i < strlen(s2); i++) {
-        ret[i + strlen(s1)] = s2[i];
-    }
-    ret[strlen(s1) + strlen(s2)] = '\0';
-
-    return ret;
 }
 
 unsigned char *MakeString(int args, ...) {

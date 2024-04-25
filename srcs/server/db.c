@@ -30,6 +30,7 @@ unsigned char *DbGetUser(MYSQL* conn, unsigned char *buf) {
     row = mysql_fetch_row(res);
     if (!row) {
         printf("not found\n");
+        mysql_free_result(res);
         free(query);
         return NULL;
     }
@@ -59,7 +60,7 @@ int DbCreateLog(MYSQL *conn, unsigned char *name, unsigned char *pass) {
     MYSQL_ROW row;
     unsigned char *query;
     if (!pass) pass = "";
-    query = MakeString(5, "INSERT INTO log(ID, AES_KEY) VALUES ('", name, "', '", pass, "')");
+    query = MakeString(5, "INSERT INTO log(NAME, AES_KEY) VALUES ('", name, "', '", pass, "')");
     if (mysql_query(conn, query)) {
         printf("query fail : %s\n", query);
         free(query);

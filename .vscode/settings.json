@@ -14,6 +14,7 @@
         "new": "c",
         "ostream": "c",
         "streambuf": "c",
-        "array": "cpp"
+        "array": "cpp",
+        "common.h": "c"
     }
 }

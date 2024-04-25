@@ -19,7 +19,6 @@ Server *InitServer(int port) {
     setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     server->aes = AesInit(KEY);
     server->status = 0;
-    server->room_count = 0;
     server->db = DbInit();
     
     if (server->sock == -1) {
@@ -48,7 +47,6 @@ Server *InitServer(int port) {
     server->changed = InitArray(sizeof(struct kevent));
     server->users = InitArray(sizeof(User));
     server->rooms = InitArray(sizeof(Room));
-    server->read_fds = InitArray(sizeof(int));
     AddEvents(server, server->sock, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
 
     return server;
@@ -79,7 +77,6 @@ void CloseServer(Server *server) {
     FreeArray(server->changed);
     FreeUsers(server->users);
     FreeRooms(server->rooms);
-    FreeArray(server->read_fds);
     mysql_close(server->db);
     mysql_library_end();
     free(server->aes);
@@ -186,7 +183,12 @@ int ReadFlag(Server *server, struct kevent *event) {
                 break;
             case TRY_PRIVATE:
                 printf("try private\n");
-                TryPrivateRoom(server, user);
+                if (!TryPrivateRoom(server, user)) {
+                    printf("try private fail\n");
+                    printf("%s", msg);
+                    write(user->fd, msg, strlen(msg));
+                    PrintRoomList(server->rooms, user);
+                }
                 break;
             case PRIVATE:
                 printf("in private\n");
@@ -197,8 +199,6 @@ int ReadFlag(Server *server, struct kevent *event) {
                 SendMsg(server, user);
                 break;
         }
-        fd = NewElement(server->read_fds);
-        *fd = event->ident;
         memset(buf, 0, strlen(buf));        
     }
     return 1;

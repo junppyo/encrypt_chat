@@ -2,9 +2,8 @@
 #include "common.h"
 
 #define ADDRESS "192.168.1.24"
-#define PORT 8083
-extern uint8_t KEY[];
 
+extern uint8_t KEY[];
 
 typedef struct server {
     int kqueue_fd;
@@ -15,7 +14,6 @@ typedef struct server {
     struct sockaddr_in server_addr;
     Array *users;
     Array *rooms;
-    uint16_t room_count;
     Array *read_fds;
     Aes *aes;
     MYSQL *db;

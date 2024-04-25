@@ -5,18 +5,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-typedef struct node {
-    void *data;
-    struct node *prev;
-    struct node *next;
-} Node;
-
-typedef struct list {
-    size_t size;
-    Node *head;
-    Node *tail;
-} List;
-
 typedef struct array {
     void **data;
     size_t data_size;
@@ -31,10 +19,8 @@ void EraseArray(Array *arr, size_t n);
 void ClearArray(Array *arr);
 void FreeArray(Array *arr);
 
-
 unsigned char *ToHex(uint8_t *buf);
 unsigned char *ToString(unsigned char *buf);
 
-unsigned char *Strcat(unsigned char *s1, unsigned char *s2);
 unsigned char* substr(const unsigned char *src, int m, int n);
 unsigned char* MakeString(int args, ...);

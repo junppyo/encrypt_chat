@@ -1,11 +1,10 @@
 #pragma once
-// #include "utils.h"
 #include "common.h"
-#include "time.h"
 
 typedef struct server Server;
 typedef struct array Array;
 typedef struct aes Aes;
+typedef struct user User;
 
 typedef struct room {
     size_t number;

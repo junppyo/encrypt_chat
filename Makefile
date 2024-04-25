@@ -23,16 +23,16 @@ $(AES): $(AES_DIR)/aes.o
 	cp $(AES_DIR)/$(AES) ./$(AES)
 
 $(SERVER): $(SERVER_OBJS) $(OBJS)
-	$(CC) $(INC) $(OBJS) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
+	$(CC) -fsanitize=address  $(INC) $(OBJS) $(SERVER_OBJS) -o $(SERVER) $(LIB) $(AES_FLAG)
 
 $(CLIENT): $(CLIENT_OBJS) $(OBJS)
-	$(CC) $(INC) $(OBJS) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
+	$(CC) -fsanitize=address $(INC) $(OBJS) $(CLIENT_OBJS) -o $(CLIENT) $(AES_FLAG)
 
 $(READER) : $(READER_OBJS) $(OBJS)
-	$(CC) -g $(INC) $(OBJS) $(READER_OBJS) -o $(READER) -lmysqlclient $(AES_FLAG)
+	$(CC) -g -fsanitize=address $(INC) $(OBJS) $(READER_OBJS) -o $(READER) -lmysqlclient $(AES_FLAG)
 
 %.o: %.c
-	$(CC) -g -c $(INC) $< -o $@
+	$(CC) -g -fsanitize=address -c $(INC) $< -o $@
 
 clean:
 	rm -rf $(SERVER_OBJS) $(CLIENT_OBJS) $(READER_OBJS)

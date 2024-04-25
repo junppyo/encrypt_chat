@@ -27,7 +27,7 @@ int main(int argc, unsigned char *argv[]) {
         return 1;
     }
 
-    query = MakeString(3, "SELECT AES_KEY from log where ID='", argv[1], "'");
+    query = MakeString(3, "SELECT AES_KEY from log where NAME='", argv[1], "'");
     printf("query : %s\n", query);
     if (mysql_query(conn, query)) {
         printf("query failed : %s\n", query);

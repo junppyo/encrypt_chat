@@ -67,7 +67,7 @@ void PrintRoomList(Array *rooms, User *user) {
     for (i = 0; i < rooms->size; i++) {
         room = rooms->data[i];
         if (room->is_secret) {
-            tmp = Strcat("*", room->name);
+            tmp = MakeString(2, "*", room->name);
             printf("private room : %s\n", tmp);
             write(fd, tmp, strlen(tmp));
             free(tmp);
@@ -220,10 +220,8 @@ int JoinRoom(Server *server, User *user, unsigned char *buf) {
     } else {
         printf("Join room\n");
         user->room_number = room->number;
-        SendJoinMsg(room, user);
         if (room->is_secret) {
             if (strlen(pass) != 0) {
-                printf("immediately join private \n");
                 strcpy(user->buf, pass);
                 free(name);
                 free(pass);
@@ -236,6 +234,7 @@ int JoinRoom(Server *server, User *user, unsigned char *buf) {
             }
         } else {
             user->status = PUBLIC;
+            SendJoinMsg(room, user);
             write(user->fd, "JOIN", 4);
             fd = NewElement(room->user_fds);
             *fd = user->fd;
@@ -299,13 +298,14 @@ int TryPrivateRoom(Server *server, User *user) {
             printf("insert to user_fds failed\n");
             return false;
         }
-        *fds = user->fd;
         user->status = PRIVATE;
+        SendJoinMsg(room, user);
+        *fds = user->fd;
         write(user->fd, room->aes->key, 16);
         return true;
-    } else {
-        user->status = LOGIN;
     }
+    user->status = LOGIN;
+    
     return false;
 }
 
