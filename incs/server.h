@@ -11,10 +11,8 @@ typedef struct server {
     int status;
     struct kevent event_list[10];
     Array *changed;
-    struct sockaddr_in server_addr;
     Array *users;
     Array *rooms;
-    Array *read_fds;
     Aes *aes;
     MYSQL *db;
 } Server;
@@ -24,6 +22,5 @@ void AddEvents(Server *server, int sock, int16_t filter, uint16_t flags, uint32_
 void CheckEvent(Server* server, int new_event);
 int ErrorFlag(Server *server, struct kevent *event);
 int ReadFlag(Server *server, struct kevent *event);
-int WriteFlag(Server *server, struct kevent *event);
 int ConnectClient(Server *server);
 void CloseServer(Server *server);

@@ -20,7 +20,8 @@ void SendMsg(Server *server, User *user) {
     room = FindRoomByNumber(server->rooms, user->room_number);
     write(room->log_fd, &user->buf_len, sizeof(unsigned char));
     n = write(room->log_fd, user->buf, user->buf_len);
-    
+    if (room->is_secret) printf("in private room\n");
+    else printf("in public room\n");
     for (i = 0; i < room->user_fds->size; i++) {
         fd = room->user_fds->data[i];
         printf("%d  send user fd : %d       room user fd : %d\n", i, user->fd, *fd);

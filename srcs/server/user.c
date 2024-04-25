@@ -40,7 +40,7 @@ void DeleteUserByFd(Array *users, int fd) {
         user = users->data[i];
         if (user->fd == fd) {
             free(user->buf);
-            EraseArray(users, i);
+            EraseElement(users, i);
             break;
         }
     }

@@ -258,7 +258,7 @@ int LeaveRoom(Server *server, User *user) {
         fd = room->user_fds->data[i];
         if (*fd == user->fd) {
             printf("\tuser %d leave room number %ld\n", user->fd, room->number);
-            EraseArray(room->user_fds, i);
+            EraseElement(room->user_fds, i);
             break;
         }
     }
@@ -270,7 +270,7 @@ int LeaveRoom(Server *server, User *user) {
                 close(room->log_fd);
                 if (room->aes) free(room->aes);
                 FreeArray(room->user_fds);
-                EraseArray(server->rooms, i);
+                EraseElement(server->rooms, i);
                 break;
             }
         }

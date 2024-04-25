@@ -26,10 +26,8 @@ typedef struct client {
 } Client;
 
 bool Run = true;
-uint8_t KEY[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
 unsigned char name[16];
 bool private = false;
-Aes *aes;
 
 Client user;
 
@@ -153,7 +151,6 @@ int main(int argc, unsigned char *argv[]) {
         return -1;
     }
     user.status = LOGOUT;
-    aes = AesInit(KEY);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {

@@ -20,7 +20,6 @@
 #include <err.h>
 #include <errno.h>
 #include "../aes/aes.h"
-#include "command.h"
 #include "db.h"
 #include "user.h"
 #include "room.h"

@@ -42,7 +42,7 @@ void *InsertArray(Array *arr, void *data) {
     return arr->data[arr->size - 1];
 }
 
-void EraseArray(Array *arr, size_t n) {
+void EraseElement(Array *arr, size_t n) {
     int i;
     
     free(arr->data[n]);

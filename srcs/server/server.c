@@ -10,23 +10,24 @@ void print_event(struct kevent* event) {
 
 Server *InitServer(int port) {
     Server *server = (Server *)malloc(sizeof(Server));
+    struct sockaddr_in server_addr;
     int optval = 1;
 
-    server->server_addr.sin_family = AF_INET;
-    server->server_addr.sin_addr.s_addr = inet_addr(ADDRESS);
-    server->server_addr.sin_port = htons(port);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(ADDRESS);
+    server_addr.sin_port = htons(port);
     server->sock = socket(AF_INET, SOCK_STREAM, 0);
     setsockopt(server->sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     server->aes = AesInit(KEY);
     server->status = 0;
     server->db = DbInit();
-    
+
     if (server->sock == -1) {
         printf("Socket create error\n");
         server->status = -1;
         return NULL;    
     }
-    if (bind(server->sock, (struct sockaddr*)&server->server_addr, sizeof(struct sockaddr)) == -1) {
+    if (bind(server->sock, (struct sockaddr*)&server_addr, sizeof(struct sockaddr)) == -1) {
         printf("Socket bind error\n");
         perror(strerror(errno));
         return NULL;    
@@ -61,8 +62,10 @@ void AddEvents(Server *server, int sock, int16_t filter, uint16_t flags, uint32_
 }
 
 void Run(Server *server) {
+    int i;
     static struct timespec ts;
-    while (!Stop) {
+
+    while (!Stop && !server->status) {
         ts.tv_sec = 10;
         ts.tv_nsec = 0;
         int new_event = kevent(server->kqueue_fd, (struct kevent *)server->changed->data[0], server->changed->size, server->event_list, 10, &ts);
@@ -93,22 +96,16 @@ void CheckEvent(Server* server, int new_event) {
         print_event(current);
         if (current->flags & EV_ERROR) {
             ErrorFlag(server, current);
-            continue;
         }
-        if (current->flags & EV_EOF) {
+        else if (current->flags & EV_EOF) {
             printf("disconnect user\n");
             DisconnectUser(server, current->ident);
             DeleteUserByFd(server->users, current->ident);
             close(current->ident);
-            continue;
         }
-        if (current->filter == EVFILT_READ) {
+        else if (current->filter == EVFILT_READ) {
             printf("read flag\n");
             ReadFlag(server, current);
-        }
-        if (current->filter == EVFILT_WRITE) {
-            printf("write flag\n");
-            WriteFlag(server, current);
         }
     }
 }
@@ -190,35 +187,12 @@ int ReadFlag(Server *server, struct kevent *event) {
                     PrintRoomList(server->rooms, user);
                 }
                 break;
-            case PRIVATE:
-                printf("in private\n");
-                SendMsg(server, user);
-                break;
-            case PUBLIC:
-                printf("in public\n");
+            default:
                 SendMsg(server, user);
                 break;
         }
         memset(buf, 0, strlen(buf));        
     }
-    return 1;
-}
-
-int WriteFlag(Server *server, struct kevent *event) {
-    User *user = UserByFd(server->users, event->ident);
-    uint8_t *buf = user->buf;
-    int len = strlen(buf);
-
-    if (len > 0) {
-        if (write(user->fd, buf, len) < 0) {
-            printf("write error\n");
-            server->status = -1;
-            return -1;
-        }
-        printf("\twrited: %s\n", buf);
-    }
-    memset(buf, 0, BUF_SIZE);
-    AddEvents(server, server->sock, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
     return 1;
 }
 
