@@ -182,12 +182,11 @@ int ReadFlag(Server *server, struct kevent *event) {
                 printf("try private\n");
                 if (!TryPrivateRoom(server, user)) {
                     printf("try private fail\n");
-                    printf("%s", msg);
-                    write(user->fd, msg, strlen(msg));
                     PrintRoomList(server->rooms, user);
                 }
                 break;
             default:
+                printf("default flags : %d\n", user->status);
                 SendMsg(server, user);
                 break;
         }
