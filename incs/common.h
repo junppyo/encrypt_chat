@@ -28,5 +28,5 @@
 #include "server.h"
 
 #define LOGIN_WORD_LIMIT 16
-#define BUF_SIZE 512
+#define BUF_SIZE 256
 

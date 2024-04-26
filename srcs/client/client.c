@@ -12,9 +12,9 @@
 #define ADDRESS "127.0.0.1"
 #define BUF_SIZE 256
 
-enum Flags {
+enum STATUS {
     LOGOUT,
-    LOGIN,
+    LOBBY,
     PRIVATE,
     PUBLIC,
 };
@@ -55,19 +55,19 @@ int Receive(void *sock) {
         if (user.status == LOGOUT) {
             write(1, buf, n);
             if (!strncmp(buf, "Welcome", 7)) {
-                user.status = LOGIN;
+                user.status = LOBBY;
             }
         }
-        else if (user.status == LOGIN && n == 16) {
+        else if (user.status == LOBBY && n == 16) {
             printf("join private\n");
             user.status = PRIVATE;
             user.room_aes = AesInit((uint8_t*)buf);
-        } else if (user.status == LOGIN && !strcmp("JOIN", buf)) {
+        } else if (user.status == LOBBY && !strcmp("JOIN", buf)) {
             printf("join public\n");
             user.status = PUBLIC;
         } else if (user.status == PRIVATE || user.status == PUBLIC) {
             if (!strncmp(buf, "Leave\n", 6)) {
-                user.status = LOGIN;
+                user.status = LOBBY;
                 PrintBuf(buf, strlen(buf));
             } else {
                 if (user.status == PRIVATE) {

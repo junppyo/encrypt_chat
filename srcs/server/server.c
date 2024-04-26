@@ -159,7 +159,7 @@ int ReadFlag(Server *server, struct kevent *event) {
                     close(user->fd);
                     DeleteUserByFd(server->users, user->fd);
                 } else {
-                    user->status = LOGIN;
+                    user->status = LOBBY;
                 }
                 break;
             case WAIT_REGIST:
@@ -167,10 +167,10 @@ int ReadFlag(Server *server, struct kevent *event) {
                     close(user->fd);
                     DeleteUserByFd(server->users, user->fd);
                 } else {
-                    user->status = LOGIN;
+                    user->status = LOBBY;
                 }
                 break;
-            case LOGIN:
+            case LOBBY:
                 if (JoinRoom(server, user, user->buf)) {
                     msg = "Create or Join Failed\n";
                     printf("%s", msg);

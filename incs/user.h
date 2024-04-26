@@ -4,11 +4,11 @@
 typedef struct server Server;
 typedef struct array Array;
 
-enum Flags {
+enum STATUS {
     WAIT_ID,
     WAIT_PASS,
     WAIT_REGIST,
-    LOGIN,
+    LOBBY,
     TRY_PRIVATE,
     PRIVATE,
     PUBLIC,

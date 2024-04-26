@@ -200,6 +200,7 @@ int JoinRoom(Server *server, User *user, unsigned char *buf) {
     room = FindRoomByName(server->rooms, name);
     
     if (!room) {
+        // Make Room
         printf("Make room\n");
         room = InitRoom(server, name, pass);
         free(name);
@@ -275,7 +276,7 @@ int LeaveRoom(Server *server, User *user) {
             }
         }
     }
-    user->status = LOGIN;
+    user->status = LOBBY;
     
     return 0;
 }
@@ -294,7 +295,7 @@ int TryPrivateRoom(Server *server, User *user) {
 
     if (!strcmp(user->buf, room->password)) {
         if (!(fds = NewElement(room->user_fds))) {
-            user->status = LOGIN;
+            user->status = LOBBY;
             printf("insert to user_fds failed\n");
             return false;
         }
@@ -304,7 +305,7 @@ int TryPrivateRoom(Server *server, User *user) {
         write(user->fd, room->aes->key, 16);
         return true;
     }
-    user->status = LOGIN;
+    user->status = LOBBY;
     
     return false;
 }
