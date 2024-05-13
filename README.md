@@ -8,10 +8,10 @@ On root directory
 ## Execute
 
 ### Server
-```sudo ./server (PORT)```
+```./server (PORT)```
 
 ### Client
-```sudo ./client (SERVER_ADDRESS) (PORT)```
+```./client (SERVER_ADDRESS) (PORT)```
 
 ## Instruction
 Private room is have '*' before room name
